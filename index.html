@@ -1,1815 +1,1047 @@
 <!DOCTYPE html>
-<html lang="it" class="antialiased">
+<html lang="it">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <meta name="apple-mobile-web-app-title" content="Libretto Auto" />
-  <meta name="theme-color" content="#F5F6F8" />
-  <title>Libretto Auto — Il Mio Garage</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Libretto Auto">
+<title>Libretto Auto — Garage & Manutenzioni</title>
+<style>
+  :root {
+    --bg: #f2f4f8;
+    --card: #ffffff;
+    --text: #111827;
+    --muted: #6b7280;
+    --border: #e5e7eb;
+    --primary: #1d4ed8;
+    --primary-light: #eff6ff;
+    --ok-bg: #dcfce7;
+    --ok-txt: #15803d;
+    --warn-bg: #fef3c7;
+    --warn-txt: #b45309;
+    --bad-bg: #fee2e2;
+    --bad-txt: #b91c1c;
+    --radius: 18px;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif; }
+  body { margin: 0; background: var(--bg); color: var(--text); padding-bottom: 40px; }
+  
+  /* Header */
+  header {
+    position: sticky; top: 0; z-index: 30;
+    background: rgba(255,255,255,0.88); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 18px;
+    padding-top: max(14px, env(safe-area-inset-top));
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .header-title { font-size: 20px; font-weight: 800; letter-spacing: -0.3px; }
+  .header-sub { font-size: 12px; color: var(--muted); }
+  .btn {
+    border: none; border-radius: 12px; padding: 10px 14px; font-size: 14px; font-weight: 600;
+    cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    transition: transform 0.1s, opacity 0.15s;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary { background: var(--primary); color: #fff; }
+  .btn-secondary { background: #e5e7eb; color: var(--text); }
+  .btn-ghost { background: transparent; color: var(--primary); padding: 6px 10px; }
+  .btn-danger { background: var(--bad-bg); color: var(--bad-txt); }
+  .btn-sm { padding: 7px 11px; font-size: 13px; border-radius: 10px; }
+  .btn-block { width: 100%; padding: 13px; font-size: 15px; }
 
-  <!-- Tailwind CSS -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Lucide Icons -->
-  <script src="https://unpkg.com/lucide@latest"></script>
-  <!-- Google Fonts: Inter & JetBrains Mono -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@600;700&display=swap" rel="stylesheet" />
+  .container { max-width: 560px; margin: 0 auto; padding: 16px; }
 
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
-            mono: ['JetBrains Mono', 'monospace'],
-          },
-          colors: {
-            garage: {
-              bg: '#F5F6F8',
-              card: '#FFFFFF',
-              accent: '#007AFF',
-            }
-          }
-        }
-      }
-    };
-  </script>
+  /* Empty State */
+  .empty-garage {
+    background: var(--card); border-radius: 24px; padding: 44px 24px; text-align: center;
+    margin-top: 28px; box-shadow: 0 4px 20px rgba(0,0,0,0.04); border: 1px solid var(--border);
+  }
+  .empty-icon {
+    width: 76px; height: 76px; border-radius: 24px; background: var(--primary-light); color: var(--primary);
+    display: flex; align-items: center; justify-content: center; margin: 0 auto 18px; font-size: 36px;
+  }
+  .empty-garage h2 { margin: 0 0 8px; font-size: 21px; }
+  .empty-garage p { margin: 0 0 24px; color: var(--muted); font-size: 14px; line-height: 1.5; }
 
-  <style>
-    :root {
-      --sat: env(safe-area-inset-top, 0px);
-      --sab: env(safe-area-inset-bottom, 0px);
-    }
+  /* Garage Cards */
+  .car-card {
+    background: var(--card); border-radius: 22px; padding: 16px 18px; margin-bottom: 14px;
+    box-shadow: 0 3px 14px rgba(0,0,0,0.04); border: 1px solid var(--border);
+    cursor: pointer; transition: transform 0.12s;
+  }
+  .car-card:active { transform: scale(0.985); }
+  .car-card-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .car-avatar-box {
+    width: 150px; height: 72px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  }
+  .car-info { flex: 1; min-width: 0; }
+  .car-name { font-size: 18px; font-weight: 800; margin: 0 0 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  
+  /* Italian Plate */
+  .plate {
+    display: inline-flex; align-items: stretch; border: 1.5px solid #1f2937; border-radius: 5px;
+    overflow: hidden; background: #fff; height: 24px; font-family: "Courier New", monospace; font-weight: 800;
+  }
+  .plate-band {
+    background: #003399; color: #fff; width: 14px; font-size: 8px; display: flex;
+    flex-direction: column; align-items: center; justify-content: space-between; padding: 2px 0;
+  }
+  .plate-num { padding: 0 7px; font-size: 13px; letter-spacing: 1px; display: flex; align-items: center; color: #111; }
 
-    body {
-      background-color: #F5F6F8;
-      color: #0F172A;
-      padding-top: var(--sat);
-      padding-bottom: calc(28px + var(--sab));
-      -webkit-tap-highlight-color: transparent;
-      overscroll-behavior-y: none;
-    }
+  .car-card-footer {
+    margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between; font-size: 13px;
+  }
+  .badge {
+    padding: 4px 9px; border-radius: 999px; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;
+  }
+  .badge-ok { background: var(--ok-bg); color: var(--ok-txt); }
+  .badge-warn { background: var(--warn-bg); color: var(--warn-txt); }
+  .badge-bad { background: var(--bad-bg); color: var(--bad-txt); }
 
-    .no-scrollbar::-webkit-scrollbar {
-      display: none;
-    }
-    .no-scrollbar {
-      -ms-overflow-style: none;
-      scrollbar-width: none;
-    }
+  /* Detail View */
+  .hero-card {
+    background: var(--card); border-radius: 22px; padding: 18px; margin-bottom: 16px;
+    border: 1px solid var(--border); box-shadow: 0 3px 14px rgba(0,0,0,0.04);
+  }
+  .hero-avatar { width: 100%; max-width: 280px; height: 115px; margin: 4px auto 10px; display: flex; align-items: center; justify-content: center; }
+  .km-box {
+    background: #f8fafc; border: 1px solid var(--border); border-radius: 14px; padding: 12px 14px;
+    display: flex; align-items: center; justify-content: space-between; margin-top: 12px;
+  }
+  .km-val { font-size: 20px; font-weight: 800; }
 
-    .ios-tap {
-      transition: transform 0.16s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.16s ease;
-    }
-    .ios-tap:active {
-      transform: scale(0.975);
-      opacity: 0.88;
-    }
+  .section-head {
+    display: flex; align-items: center; justify-content: space-between; margin: 20px 2px 10px;
+  }
+  .section-head h3 { margin: 0; font-size: 16px; font-weight: 800; }
 
-    @keyframes slideUp {
-      from { transform: translateY(100%); opacity: 0.4; }
-      to { transform: translateY(0); opacity: 1; }
-    }
-    .animate-sheet {
-      animation: slideUp 0.28s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-    }
+  .item-card {
+    background: var(--card); border-radius: 16px; padding: 14px 16px; margin-bottom: 10px;
+    border: 1px solid var(--border);
+  }
+  .item-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+  .item-title { font-weight: 700; font-size: 15px; margin: 0 0 3px; }
+  .item-meta { font-size: 12.5px; color: var(--muted); }
 
-    @keyframes fadeInScale {
-      from { opacity: 0; transform: translateY(8px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    .view-transition {
-      animation: fadeInScale 0.24s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-    }
-  </style>
+  /* Tabs inside Detail */
+  .tabs {
+    display: flex; background: #e5e7eb; padding: 4px; border-radius: 14px; margin-bottom: 16px;
+  }
+  .tab {
+    flex: 1; border: none; background: transparent; padding: 9px; border-radius: 10px;
+    font-size: 14px; font-weight: 700; color: var(--muted); cursor: pointer;
+  }
+  .tab.active { background: #fff; color: var(--text); box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+
+  /* Modals */
+  .modal-backdrop {
+    position: fixed; inset: 0; background: rgba(17,24,39,0.55); z-index: 50;
+    display: none; align-items: flex-end; justify-content: center;
+  }
+  .modal-backdrop.open { display: flex; }
+  .modal {
+    background: #fff; width: 100%; max-width: 560px; max-height: 92vh; overflow-y: auto;
+    border-radius: 24px 24px 0 0; padding: 20px 18px 32px;
+    animation: slideUp 0.2s ease-out;
+  }
+  @media (min-width: 600px) {
+    .modal-backdrop { align-items: center; }
+    .modal { border-radius: 24px; }
+  }
+  @keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+  .modal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .modal-head h3 { margin: 0; font-size: 18px; }
+  .close-btn { background: #f3f4f6; border: none; width: 32px; height: 32px; border-radius: 50%; font-size: 18px; cursor: pointer; }
+
+  .form-group { margin-bottom: 14px; }
+  label { display: block; font-size: 13px; font-weight: 700; margin-bottom: 6px; color: #374151; }
+  input, select, textarea {
+    width: 100%; padding: 11px 12px; border: 1.5px solid var(--border); border-radius: 12px;
+    font-size: 15px; background: #fff; color: var(--text);
+  }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--primary); }
+  .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  /* Color Swatches */
+  .swatches { display: flex; flex-wrap: wrap; gap: 10px; }
+  .swatch {
+    width: 34px; height: 34px; border-radius: 50%; border: 2px solid #d1d5db; cursor: pointer;
+    position: relative;
+  }
+  .swatch.selected { border: 3px solid var(--primary); transform: scale(1.1); }
+
+  /* Avatar Preview Box */
+  .preview-box {
+    background: linear-gradient(180deg, #f8fafc 0%, #eef2f6 100%);
+    border: 1px solid var(--border); border-radius: 16px; padding: 10px;
+    display: flex; flex-direction: column; align-items: center; margin-bottom: 14px;
+  }
+  .preview-box svg { width: 240px; height: 98px; }
+
+  .receipt-thumb {
+    width: 100%; max-height: 160px; object-fit: cover; border-radius: 10px; margin-top: 8px; border: 1px solid var(--border);
+  }
+  .backup-bar {
+    margin-top: 28px; padding-top: 16px; border-top: 1px solid var(--border);
+    display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;
+  }
+</style>
 </head>
+<body>
 
-<body class="select-none">
+<header id="app-header"></header>
+<main class="container" id="app-main"></main>
 
-  <!-- ========================================================= -->
-  <!-- VISTA 1: HOME / IL MIO GARAGE (SCHERMATA INIZIALE PULITA) -->
-  <!-- ========================================================= -->
-  <div id="view-garage" class="min-h-screen flex flex-col">
-
-    <!-- Header Minimale Garage -->
-    <header class="sticky top-0 z-30 bg-[#F5F6F8]/85 backdrop-blur-xl px-5 pt-4 pb-3 border-b border-slate-200/60">
-      <div class="max-w-xl mx-auto flex items-center justify-between">
-        <div>
-          <span class="text-[11px] font-bold uppercase tracking-widest text-slate-400">Libretto Digitale</span>
-          <h1 class="text-2xl font-extrabold tracking-tight text-slate-900">Il mio Garage</h1>
-        </div>
-
-        <div class="flex items-center gap-2">
-          <button onclick="openModal('backupModal')" title="Backup & Impostazioni"
-            class="p-2.5 rounded-full bg-white text-slate-600 border border-slate-200/80 shadow-xs ios-tap">
-            <i data-lucide="settings" class="w-4 h-4"></i>
-          </button>
-          <button onclick="openVehicleModal()" id="headerAddCarBtn"
-            class="px-3.5 py-2 rounded-full bg-[#007AFF] hover:bg-blue-600 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm ios-tap">
-            <i data-lucide="plus" class="w-4 h-4"></i> Aggiungi
-          </button>
-        </div>
-      </div>
-    </header>
-
-    <!-- Contenuto Garage -->
-    <main class="flex-1 max-w-xl w-full mx-auto px-5 pt-5 flex flex-col">
-
-      <!-- STATO VUOTO (Visibile all'avvio se non ci sono auto) -->
-      <div id="garageEmptyState" class="hidden flex-1 flex flex-col items-center justify-center text-center py-12 px-4 view-transition">
-        <div class="w-44 h-28 mb-4 flex items-center justify-center opacity-90" id="emptyStateCarPreview">
-          <!-- SVG auto stilizzata minimal inserita via JS -->
-        </div>
-        <h2 class="text-xl font-extrabold text-slate-900 tracking-tight">Il tuo garage è vuoto</h2>
-        <p class="text-sm text-slate-500 max-w-xs mt-1.5 leading-relaxed">
-          Aggiungi la tua auto scegliendo modello e colore per tenere sotto controllo tagliandi, revisione, bollo e assicurazione.
-        </p>
-        <button onclick="openVehicleModal()"
-          class="mt-6 px-6 py-3.5 rounded-2xl bg-[#007AFF] hover:bg-blue-600 text-white font-bold text-sm flex items-center gap-2 shadow-md shadow-blue-500/20 ios-tap">
-          <i data-lucide="plus-circle" class="w-5 h-5"></i>
-          Aggiungi la tua prima auto
-        </button>
-      </div>
-
-      <!-- GRIGLIA / LISTA VEICOLI SALVATI -->
-      <div id="garageVehiclesList" class="space-y-4 view-transition">
-        <!-- Popolato dinamicamente via JS -->
-      </div>
-
-    </main>
-  </div>
-
-  <!-- ========================================================= -->
-  <!-- VISTA 2: DETTAGLIO VEICOLO (APERTA CLICCANDO SULL'AUTO)    -->
-  <!-- ========================================================= -->
-  <div id="view-detail" class="hidden min-h-screen flex flex-col view-transition">
-
-    <!-- Top Navigation Dettaglio -->
-    <header class="sticky top-0 z-30 bg-[#F5F6F8]/85 backdrop-blur-xl px-4 py-3 border-b border-slate-200/60">
-      <div class="max-w-xl mx-auto flex items-center justify-between">
-        <button onclick="backToGarage()"
-          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-slate-200/80 text-slate-700 text-xs font-bold shadow-2xs ios-tap">
-          <i data-lucide="chevron-left" class="w-4 h-4"></i> Il mio Garage
-        </button>
-
-        <button onclick="editCurrentVehicle()"
-          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-slate-200/80 text-slate-700 text-xs font-semibold shadow-2xs ios-tap">
-          <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5"></i> Modifica Auto
-        </button>
-      </div>
-    </header>
-
-    <main class="max-w-xl w-full mx-auto px-4 pt-4 space-y-5">
-
-      <!-- Hero Card Veicolo con Avatar Grande -->
-      <section id="detailHeroCard" class="bg-white rounded-3xl p-5 shadow-sm border border-slate-200/60">
-        <!-- Popolato via JS -->
-      </section>
-
-      <!-- Segmented Control stile iOS (Riepilogo & Scadenze / Manutenzioni) -->
-      <div class="bg-slate-200/80 p-1 rounded-2xl grid grid-cols-2 gap-1">
-        <button onclick="switchDetailSubTab('overview')" id="subtab-btn-overview"
-          class="py-2 rounded-xl text-xs font-bold bg-white text-slate-900 shadow-xs transition-all">
-          Scadenze & Controlli
-        </button>
-        <button onclick="switchDetailSubTab('maintenance')" id="subtab-btn-maintenance"
-          class="py-2 rounded-xl text-xs font-bold text-slate-500 transition-all">
-          Storico Manutenzioni
-        </button>
-      </div>
-
-      <!-- SOTTO-SEZIONE A: SCADENZE & CONTROLLI -->
-      <section id="detail-subtab-overview" class="space-y-3.5">
-        <div class="flex items-center justify-between px-1">
-          <div>
-            <h3 class="text-base font-extrabold text-slate-900">Scadenze & Controlli</h3>
-            <p class="text-[11px] text-slate-500">Tocca una scadenza per rinnovarla o modificarla</p>
-          </div>
-          <button onclick="openDeadlineModal()"
-            class="px-3 py-1.5 rounded-xl bg-blue-50 text-[#007AFF] text-xs font-bold flex items-center gap-1 ios-tap">
-            <i data-lucide="plus" class="w-3.5 h-3.5"></i> Scadenza
-          </button>
-        </div>
-
-        <div id="detailDeadlinesList" class="space-y-3">
-          <!-- Popolato via JS -->
-        </div>
-      </section>
-
-      <!-- SOTTO-SEZIONE B: MANUTENZIONI -->
-      <section id="detail-subtab-maintenance" class="hidden space-y-4">
-        <!-- Riepilogo Spese -->
-        <div class="grid grid-cols-2 gap-3">
-          <div class="bg-white rounded-2xl p-4 border border-slate-200/60 shadow-2xs">
-            <div class="text-[11px] font-semibold text-slate-400 flex items-center gap-1.5">
-              <i data-lucide="calendar" class="w-3.5 h-3.5 text-[#007AFF]"></i>
-              Spese <span id="detailYearLabel">2026</span>
-            </div>
-            <div id="detailYearTotal" class="text-xl font-extrabold text-slate-900 mt-1">€ 0</div>
-          </div>
-          <div class="bg-white rounded-2xl p-4 border border-slate-200/60 shadow-2xs">
-            <div class="text-[11px] font-semibold text-slate-400 flex items-center gap-1.5">
-              <i data-lucide="wallet" class="w-3.5 h-3.5 text-emerald-500"></i>
-              Totale Storico
-            </div>
-            <div id="detailAllTimeTotal" class="text-xl font-extrabold text-slate-900 mt-1">€ 0</div>
-          </div>
-        </div>
-
-        <!-- Ricerca & Nuovo Intervento -->
-        <div class="flex items-center gap-2">
-          <div class="relative flex-1">
-            <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
-            <input type="text" id="maintenanceSearchInput" oninput="renderDetailMaintenances()"
-              placeholder="Cerca tagliando, gomme, officina..."
-              class="w-full pl-9 pr-3 py-2.5 rounded-xl bg-white border border-slate-200/80 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#007AFF]" />
-          </div>
-          <button onclick="openMaintenanceModal()"
-            class="px-4 py-2.5 rounded-xl bg-[#007AFF] hover:bg-blue-600 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs shrink-0 ios-tap">
-            <i data-lucide="plus" class="w-4 h-4"></i> Intervento
-          </button>
-        </div>
-
-        <!-- Filtri Categoria -->
-        <div id="detailCategoryFilters" class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
-          <!-- Popolato via JS -->
-        </div>
-
-        <!-- Lista Interventi -->
-        <div id="detailMaintenanceList" class="space-y-3">
-          <!-- Popolato via JS -->
-        </div>
-      </section>
-
-    </main>
-  </div>
-
-  <!-- ========================================================= -->
-  <!-- MODAL 1: AGGIUNGI / MODIFICA AUTO (CON CONFIGURATORE SVG) -->
-  <!-- ========================================================= -->
-  <div id="vehicleModal" class="fixed inset-0 z-50 hidden bg-black/45 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
-    <div class="animate-sheet bg-white w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-6 space-y-4 shadow-2xl max-h-[92vh] overflow-y-auto">
-      <div class="flex items-center justify-between">
-        <h3 id="vehicleModalTitle" class="text-lg font-extrabold text-slate-900">Nuova Auto</h3>
-        <button onclick="closeModal('vehicleModal')" class="p-2 rounded-full bg-slate-100 text-slate-500 ios-tap">
-          <i data-lucide="x" class="w-4 h-4"></i>
-        </button>
-      </div>
-
-      <!-- ANTEPRIMA LIVE DELL'AVATAR AUTO -->
-      <div class="bg-[#F5F6F8] rounded-2xl p-4 flex flex-col items-center justify-center border border-slate-200/70">
-        <div id="liveCarAvatarPreview" class="w-48 h-24 flex items-center justify-center transition-all duration-200">
-          <!-- Renderizzato dinamicamente al cambio di modello o colore -->
-        </div>
-        <span class="text-[11px] font-medium text-slate-400 mt-1">Anteprima avatar nel tuo garage</span>
-      </div>
-
-      <form id="vehicleForm" onsubmit="saveVehicle(event)" class="space-y-4">
-        <input type="hidden" id="vId" />
-
-        <!-- Selettore Carrozzeria -->
-        <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1.5">Tipo di Carrozzeria</label>
-          <div id="bodyTypeSelector" class="grid grid-cols-3 gap-2">
-            <!-- Popolato via JS -->
-          </div>
-        </div>
-
-        <!-- Selettore Colore Carrozzeria -->
-        <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1.5">Colore Auto</label>
-          <div id="colorSwatchSelector" class="flex items-center justify-between gap-2 bg-[#F5F6F8] p-2.5 rounded-2xl border border-slate-200/60">
-            <!-- Popolato via JS -->
-          </div>
-        </div>
-
-        <!-- Marca e Modello -->
-        <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">Marca e Modello *</label>
-          <input type="text" id="vName" required oninput="handleModelNameAutoDetect(this.value)" placeholder="Es. Dacia Sandero, Renault Kadjar, Fiat Panda..."
-            class="w-full px-3.5 py-2.5 rounded-xl bg-[#F5F6F8] border border-slate-200/80 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#007AFF]" />
-        </div>
-
-        <!-- Targa & Chilometraggio -->
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Targa *</label>
-            <input type="text" id="vPlate" required maxlength="10" placeholder="GH 482 KL"
-              class="w-full px-3.5 py-2.5 rounded-xl bg-[#F5F6F8] border border-slate-200/80 text-sm font-mono font-bold uppercase focus:outline-none focus:ring-2 focus:ring-[#007AFF]" />
-          </div>
-          <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Chilometri Attuali *</label>
-            <input type="number" id="vKm" required min="0" inputmode="numeric" placeholder="45000"
-              class="w-full px-3.5 py-2.5 rounded-xl bg-[#F5F6F8] border border-slate-200/80 text-sm font-mono font-bold focus:outline-none focus:ring-2 focus:ring-[#007AFF]" />
-          </div>
-        </div>
-
-        <!-- Anno & Alimentazione -->
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Anno</label>
-            <input type="number" id="vYear" min="1950" max="2030" inputmode="numeric" placeholder="2022"
-              class="w-full px-3.5 py-2.5 rounded-xl bg-[#F5F6F8] border border-slate-200/80 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#007AFF]" />
-          </div>
-          <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Alimentazione</label>
-            <select id="vFuel" class="w-full px-3 py-2.5 rounded-xl bg-[#F5F6F8] border border-slate-200/80 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#007AFF]">
-              <option value="Benzina">Benzina</option>
-              <option value="Diesel">Diesel</option>
-              <option value="Ibrida">Ibrida</option>
-              <option value="Elettrica">Elettrica</option>
-              <option value="GPL / Metano">GPL / Metano</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="flex items-center gap-2 pt-2">
-          <button type="button" id="deleteVehicleBtn" onclick="confirmDeleteCurrentVehicle()"
-            class="hidden px-4 py-3.5 rounded-2xl bg-red-50 text-red-600 font-bold text-sm ios-tap" title="Elimina auto">
-            <i data-lucide="trash-2" class="w-4 h-4"></i>
-          </button>
-          <button type="submit" class="flex-1 py-3.5 rounded-2xl bg-[#007AFF] hover:bg-blue-600 text-white font-bold text-sm shadow-md ios-tap">
-            Salva nel Garage
-          </button>
-        </div>
-      </form>
+<!-- MODAL VEICOLO -->
+<div class="modal-backdrop" id="modal-car">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="modal-car-title">Aggiungi Auto</h3>
+      <button class="close-btn" onclick="closeModal('modal-car')">&times;</button>
     </div>
-  </div>
-
-  <!-- ========================================================= -->
-  <!-- MODAL 2: AGGIORNAMENTO RAPIDO KM                          -->
-  <!-- ========================================================= -->
-  <div id="updateKmModal" class="fixed inset-0 z-50 hidden bg-black/45 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
-    <div class="animate-sheet bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl p-6 space-y-4 shadow-2xl">
-      <div class="flex items-center justify-between">
-        <h3 class="text-lg font-extrabold text-slate-900">Aggiorna Chilometri</h3>
-        <button onclick="closeModal('updateKmModal')" class="p-2 rounded-full bg-slate-100 text-slate-500">
-          <i data-lucide="x" class="w-4 h-4"></i>
-        </button>
+    <form id="form-car" onsubmit="saveCar(event)">
+      <input type="hidden" id="car-id">
+      <div class="preview-box">
+        <div id="car-svg-preview"></div>
+        <span style="font-size:11px; color:#6b7280; margin-top:2px;">Anteprima veicolo</span>
       </div>
-      <p class="text-xs text-slate-500">
-        Aggiornando il contachilometri vengono ricalcolate automaticamente le scadenze legate alla percorrenza.
-      </p>
+
+      <div class="form-group">
+        <label>Marca e Modello *</label>
+        <input type="text" id="car-name" placeholder="Es. Dacia Sandero, Renault Kadjar..." required oninput="autoDetectCar(this.value)">
+      </div>
+
+      <div class="row-2">
+        <div class="form-group">
+          <label>Sagoma / Carrozzeria</label>
+          <select id="car-shape" onchange="updateCarPreview()">
+            <option value="sandero">Dacia Sandero (Berlina 5p)</option>
+            <option value="kadjar">Renault Kadjar (SUV)</option>
+            <option value="berlina">Berlina / Hatchback</option>
+            <option value="suv">SUV / Crossover</option>
+            <option value="sw">Station Wagon</option>
+            <option value="citycar">Citycar</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Targa</label>
+          <input type="text" id="car-plate" placeholder="AB 123 CD" style="text-transform:uppercase;">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Colore Carrozzeria</label>
+        <div class="swatches" id="color-swatches"></div>
+        <input type="hidden" id="car-color" value="#f8fafc">
+      </div>
+
+      <div class="row-2">
+        <div class="form-group">
+          <label>Chilometri Attuali *</label>
+          <input type="number" id="car-km" placeholder="Es. 65000" required min="0">
+        </div>
+        <div class="form-group">
+          <label>Anno Immatricolazione</label>
+          <input type="number" id="car-year" placeholder="Es. 2021" min="1970" max="2030">
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-block">Salva Veicolo</button>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL SCADENZA -->
+<div class="modal-backdrop" id="modal-deadline">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="modal-deadline-title">Nuova Scadenza</h3>
+      <button class="close-btn" onclick="closeModal('modal-deadline')">&times;</button>
+    </div>
+    <form id="form-deadline" onsubmit="saveDeadline(event)">
+      <input type="hidden" id="dl-id">
+      <div class="form-group">
+        <label>Tipo Scadenza *</label>
+        <select id="dl-type" onchange="onDeadlineTypeChange()">
+          <option value="Revisione Ministeriale">Revisione Ministeriale</option>
+          <option value="Tagliando / Cambio Olio">Tagliando / Cambio Olio</option>
+          <option value="Assicurazione RCA">Assicurazione RCA</option>
+          <option value="Bollo Auto">Bollo Auto</option>
+          <option value="Inversione / Cambio Gomme">Inversione / Cambio Gomme</option>
+          <option value="Altro">Altro promemoria</option>
+        </select>
+      </div>
+      <div class="form-group" id="dl-custom-group" style="display:none;">
+        <label>Nome Scadenza *</label>
+        <input type="text" id="dl-custom-name" placeholder="Es. Cinghia distribuzione">
+      </div>
+      <div class="row-2">
+        <div class="form-group">
+          <label>Data Scadenza</label>
+          <input type="date" id="dl-date">
+        </div>
+        <div class="form-group">
+          <label>Oppure a Km</label>
+          <input type="number" id="dl-km" placeholder="Es. 80000" min="0">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Note</label>
+        <input type="text" id="dl-notes" placeholder="Es. Ogni 2 anni o 15.000 km">
+      </div>
+      <button type="submit" class="btn btn-primary btn-block">Salva Scadenza</button>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL MANUTENZIONE -->
+<div class="modal-backdrop" id="modal-maint">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Registra Intervento</h3>
+      <button class="close-btn" onclick="closeModal('modal-maint')">&times;</button>
+    </div>
+    <form id="form-maint" onsubmit="saveMaint(event)">
+      <div class="form-group">
+        <label>Intervento Eseguito *</label>
+        <input type="text" id="m-title" placeholder="Es. Tagliando completo, Pastiglie freni..." required>
+      </div>
+      <div class="row-2">
+        <div class="form-group">
+          <label>Data *</label>
+          <input type="date" id="m-date" required>
+        </div>
+        <div class="form-group">
+          <label>Chilometri *</label>
+          <input type="number" id="m-km" required min="0">
+        </div>
+      </div>
+      <div class="row-2">
+        <div class="form-group">
+          <label>Categoria</label>
+          <select id="m-cat">
+            <option value="Tagliando">Tagliando / Olio</option>
+            <option value="Freni">Freni</option>
+            <option value="Gomme">Pneumatici</option>
+            <option value="Revisione">Revisione</option>
+            <option value="Meccanica">Meccanica / Altro</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Costo (€)</label>
+          <input type="number" id="m-cost" step="0.01" placeholder="0.00" min="0">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Officina / Note</label>
+        <textarea id="m-notes" rows="2" placeholder="Dettagli ricambi, olio usato, officina..."></textarea>
+      </div>
+      <div class="form-group">
+        <label>Foto Fattura / Ricevuta (opzionale)</label>
+        <input type="file" id="m-photo" accept="image/*" onchange="handlePhoto(event)">
+        <input type="hidden" id="m-photo-data">
+      </div>
+      <button type="submit" class="btn btn-primary btn-block">Salva nel Libretto</button>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL AGGIORNA KM -->
+<div class="modal-backdrop" id="modal-km">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Aggiorna Chilometri</h3>
+      <button class="close-btn" onclick="closeModal('modal-km')">&times;</button>
+    </div>
+    <form onsubmit="saveQuickKm(event)">
+      <div class="form-group">
+        <label>Nuovo chilometraggio attuale</label>
+        <input type="number" id="quick-km-input" required min="0" style="font-size:20px; font-weight:800;">
+      </div>
+      <button type="submit" class="btn btn-primary btn-block">Aggiorna</button>
+    </form>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = 'libretto_auto_v3';
+let state = { cars: [], selectedCarId: null, activeTab: 'deadlines' };
+
+const COLORS = [
+  { name: 'Bianco Ghiaccio', hex: '#f8fafc' },
+  { name: 'Grigio Titanio', hex: '#717882' },
+  { name: 'Argento Metallizzato', hex: '#cbd5e1' },
+  { name: 'Nero Nacré', hex: '#1f2937' },
+  { name: 'Blu Iron', hex: '#1d4ed8' },
+  { name: 'Rosso Fusion', hex: '#dc2626' },
+  { name: 'Verde Cedro', hex: '#3f6212' },
+  { name: 'Beige Sabbia', hex: '#d6c7b2' }
+];
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed.cars)) state.cars = parsed.cars;
+    }
+  } catch (e) { console.error(e); }
+}
+
+function persist() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({ cars: state.cars }));
+}
+
+function getShade(hex) {
+  const c = hex.replace('#','');
+  const r = Math.max(0, parseInt(c.substr(0,2),16) - 28);
+  const g = Math.max(0, parseInt(c.substr(2,2),16) - 28);
+  const b = Math.max(0, parseInt(c.substr(4,2),16) - 28);
+  return `rgb(${r},${g},${b})`;
+}
+
+function isLightColor(hex) {
+  const c = hex.replace('#','');
+  const r = parseInt(c.substr(0,2),16);
+  const g = parseInt(c.substr(2,2),16);
+  const b = parseInt(c.substr(4,2),16);
+  return (r*299 + g*587 + b*114)/1000 > 185;
+}
+
+function getCarSVG(shape, color) {
+  const shade = getShade(color);
+  const stroke = isLightColor(color) ? '#94a3b8' : '#1e293b';
+  const uid = 'g_' + Math.random().toString(36).slice(2,7);
+
+  // Wheel helper (front right at x=212, rear left at x=68)
+  const wheels = (ry = 92, r = 21) => `
+    <g>
+      <circle cx="68" cy="${ry}" r="${r}" fill="#18181b"/>
+      <circle cx="68" cy="${ry}" r="${r*0.64}" fill="#e2e8f0" stroke="#475569" stroke-width="1.5"/>
+      <circle cx="68" cy="${ry}" r="${r*0.22}" fill="#334155"/>
+      <line x1="68" y1="${ry-r*0.6}" x2="68" y2="${ry+r*0.6}" stroke="#64748b" stroke-width="2"/>
+      <line x1="${68-r*0.6}" y1="${ry}" x2="${68+r*0.6}" y2="${ry}" stroke="#64748b" stroke-width="2"/>
+
+      <circle cx="212" cy="${ry}" r="${r}" fill="#18181b"/>
+      <circle cx="212" cy="${ry}" r="${r*0.64}" fill="#e2e8f0" stroke="#475569" stroke-width="1.5"/>
+      <circle cx="212" cy="${ry}" r="${r*0.22}" fill="#334155"/>
+      <line x1="212" y1="${ry-r*0.6}" x2="212" y2="${ry+r*0.6}" stroke="#64748b" stroke-width="2"/>
+      <line x1="${212-r*0.6}" y1="${ry}" x2="${212+r*0.6}" y2="${ry}" stroke="#64748b" stroke-width="2"/>
+    </g>`;
+
+  // 1. DACIA SANDERO (Berlina 5p moderna, senza barre sul tetto, firma LED a Y)
+  if (shape === 'sandero') {
+    return `<svg viewBox="0 0 280 120" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="${uid}" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="${color}"/>
+          <stop offset="100%" stop-color="${shade}"/>
+        </linearGradient>
+      </defs>
+      <ellipse cx="140" cy="113" rx="115" ry="4.5" fill="rgba(15,23,42,0.14)"/>
+      <!-- Scocca berlina 5 porte senza barre -->
+      <path d="M 32 88 L 28 73 C 28 63, 33 53, 41 46 L 68 27 C 82 22, 118 21, 148 23 C 166 25, 184 37, 200 49 L 244 55 C 254 57, 259 64, 259 75 L 257 88 L 236 90 C 236 74, 188 74, 188 90 L 92 90 C 92 74, 44 74, 44 90 Z"
+            fill="url(#${uid})" stroke="${stroke}" stroke-width="1.6" stroke-linejoin="round"/>
+      <!-- Finestrini laterali con 3° vetro triangolare -->
+      <path d="M 48 47 L 72 30 C 85 26, 114 25, 134 26 L 134 48 L 46 49 Z" fill="#1e293b"/>
+      <path d="M 140 26 C 158 27, 174 36, 190 48 L 140 48 Z" fill="#1e293b"/>
+      <!-- Montante B -->
+      <rect x="134" y="25" width="6" height="24" fill="#0f172a"/>
+      <!-- Linea di cintura e nervatura fiancata Sandero -->
+      <path d="M 44 51 L 196 51" stroke="${stroke}" stroke-width="1" opacity="0.6"/>
+      <path d="M 96 76 L 184 76" stroke="${stroke}" stroke-width="1.2" opacity="0.45"/>
+      <!-- Maniglie -->
+      <rect x="104" y="55" width="11" height="3" rx="1.5" fill="${stroke}"/>
+      <rect x="148" y="55" width="11" height="3" rx="1.5" fill="${stroke}"/>
+      <!-- Specchietto -->
+      <path d="M 183 47 L 193 45 L 194 52 L 183 52 Z" fill="${color}" stroke="${stroke}" stroke-width="1.2"/>
+      <!-- Faro anteriore con firma LED a Y -->
+      <path d="M 241 56 L 257 60 L 255 67 L 239 63 Z" fill="#f8fafc" stroke="#64748b" stroke-width="1"/>
+      <path d="M 243 60 L 251 62 M 251 62 L 255 59 M 251 62 L 254 65" stroke="#0284c7" stroke-width="1.6" stroke-linecap="round"/>
+      <!-- Fanale posteriore -->
+      <path d="M 30 55 L 42 54 L 40 64 L 29 64 Z" fill="#dc2626"/>
+      <!-- Inserto paraurti anteriore -->
+      <path d="M 246 77 L 258 77 L 257 86 L 244 86 Z" fill="#1e293b"/>
+      ${wheels(91, 20.5)}
+    </svg>`;
+  }
+
+  // 2. RENAULT KADJAR (SUV medio muscoloso, firma LED a C, protezioni sottoscocca, barre integrate)
+  if (shape === 'kadjar') {
+    return `<svg viewBox="0 0 280 120" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="${uid}" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="${color}"/>
+          <stop offset="100%" stop-color="${shade}"/>
+        </linearGradient>
+      </defs>
+      <ellipse cx="140" cy="114" rx="118" ry="4.5" fill="rgba(15,23,42,0.16)"/>
+      <!-- Barre tetto integrate -->
+      <path d="M 62 21 Q 115 17 166 21" fill="none" stroke="#cbd5e1" stroke-width="2.6" stroke-linecap="round"/>
+      <!-- Scocca SUV muscolosa -->
+      <path d="M 26 86 L 24 68 C 24 57, 29 48, 37 41 L 60 22 C 82 18, 132 18, 164 22 C 180 25, 194 37, 207 47 L 247 51 C 257 53, 262 61, 262 73 L 260 87 L 238 89 C 238 71, 186 71, 186 89 L 94 89 C 94 71, 42 71, 42 89 Z"
+            fill="url(#${uid})" stroke="${stroke}" stroke-width="1.6" stroke-linejoin="round"/>
+      <!-- Passaruota neri SUV + fascia sottoscocca con inserto cromato -->
+      <path d="M 40 89 C 40 69, 96 69, 96 89" fill="none" stroke="#1e293b" stroke-width="4.5"/>
+      <path d="M 184 89 C 184 69, 240 69, 240 89" fill="none" stroke="#1e293b" stroke-width="4.5"/>
+      <rect x="94" y="83" width="92" height="6" rx="2" fill="#1e293b"/>
+      <rect x="102" y="84.5" width="76" height="2" rx="1" fill="#cbd5e1"/>
+      <!-- Finestratura laterale con linea cromata che sale -->
+      <path d="M 43 43 L 64 25 C 86 22, 118 22, 138 23 L 138 45 L 43 45 Z" fill="#1e293b"/>
+      <path d="M 144 23 C 164 24, 180 34, 196 46 L 144 45 Z" fill="#1e293b"/>
+      <path d="M 42 45 L 197 46" stroke="#e2e8f0" stroke-width="1.6"/>
+      <rect x="138" y="22" width="6" height="24" fill="#0f172a"/>
+      <!-- Linea muscolosa fiancata -->
+      <path d="M 45 55 Q 72 48 102 56 L 182 56" fill="none" stroke="${stroke}" stroke-width="1.2" opacity="0.55"/>
+      <!-- Specchietto SUV -->
+      <path d="M 186 44 L 198 41 L 199 49 L 186 49 Z" fill="${color}" stroke="${stroke}" stroke-width="1.2"/>
+      <!-- Faro LED C-Shape -->
+      <path d="M 241 53 L 259 57 L 257 66 L 239 62 Z" fill="#f8fafc" stroke="#64748b" stroke-width="1"/>
+      <path d="M 255 57 L 245 56 L 244 62 L 255 64" fill="none" stroke="#0284c7" stroke-width="1.7" stroke-linecap="round"/>
+      <!-- Fanale posteriore -->
+      <path d="M 26 51 L 41 49 L 39 60 L 25 60 Z" fill="#dc2626"/>
+      ${wheels(90, 22.5)}
+    </svg>`;
+  }
+
+  // 3. SUV GENERICO
+  if (shape === 'suv') {
+    return `<svg viewBox="0 0 280 120" xmlns="http://www.w3.org/2000/svg">
+      <ellipse cx="140" cy="114" rx="116" ry="4.5" fill="rgba(15,23,42,0.15)"/>
+      <path d="M 28 87 L 26 64 C 26 54, 32 45, 40 38 L 62 21 L 166 21 L 204 46 L 248 51 C 257 53, 261 61, 261 73 L 259 87 L 238 89 C 238 71, 186 71, 186 89 L 94 89 C 94 71, 42 71, 42 89 Z"
+            fill="${color}" stroke="${stroke}" stroke-width="1.6"/>
+      <path d="M 44 41 L 65 25 L 136 25 L 136 44 L 44 44 Z" fill="#1e293b"/>
+      <path d="M 142 25 L 163 25 L 193 44 L 142 44 Z" fill="#1e293b"/>
+      <rect x="94" y="83" width="92" height="5" fill="#1e293b"/>
+      <path d="M 244 54 L 259 58 L 257 65 L 242 62 Z" fill="#fef08a"/>
+      <path d="M 27 50 L 39 49 L 38 60 L 26 60 Z" fill="#dc2626"/>
+      ${wheels(90, 22)}
+    </svg>`;
+  }
+
+  // 4. STATION WAGON
+  if (shape === 'sw') {
+    return `<svg viewBox="0 0 280 120" xmlns="http://www.w3.org/2000/svg">
+      <ellipse cx="140" cy="113" rx="120" ry="4.5" fill="rgba(15,23,42,0.14)"/>
+      <path d="M 22 88 L 20 68 C 20 57, 25 48, 34 40 L 52 24 L 164 24 L 202 48 L 250 54 C 258 56, 262 63, 262 74 L 260 88 L 238 90 C 238 74, 188 74, 188 90 L 92 90 C 92 74, 42 74, 42 90 Z"
+            fill="${color}" stroke="${stroke}" stroke-width="1.6"/>
+      <path d="M 38 43 L 55 28 L 134 28 L 134 46 L 38 46 Z" fill="#1e293b"/>
+      <path d="M 140 28 L 161 28 L 191 46 L 140 46 Z" fill="#1e293b"/>
+      <path d="M 246 56 L 260 60 L 258 66 L 244 63 Z" fill="#fef08a"/>
+      <path d="M 21 53 L 33 52 L 32 62 L 20 62 Z" fill="#dc2626"/>
+      ${wheels(91, 20.5)}
+    </svg>`;
+  }
+
+  // 5. CITYCAR
+  if (shape === 'citycar') {
+    return `<svg viewBox="0 0 280 120" xmlns="http://www.w3.org/2000/svg">
+      <ellipse cx="140" cy="113" rx="98" ry="4.5" fill="rgba(15,23,42,0.14)"/>
+      <path d="M 46 88 L 43 68 C 43 56, 48 45, 58 36 L 78 23 L 154 23 L 186 47 L 226 53 C 235 55, 239 63, 239 74 L 237 88 L 218 90 C 218 75, 174 75, 174 90 L 106 90 C 106 75, 62 75, 62 90 Z"
+            fill="${color}" stroke="${stroke}" stroke-width="1.6"/>
+      <path d="M 62 41 L 81 27 L 130 27 L 130 46 L 62 46 Z" fill="#1e293b"/>
+      <path d="M 136 27 L 151 27 L 176 46 L 136 46 Z" fill="#1e293b"/>
+      <path d="M 222 55 L 236 59 L 234 65 L 220 62 Z" fill="#fef08a"/>
+      <path d="M 44 53 L 55 52 L 54 62 L 43 62 Z" fill="#dc2626"/>
+      <g>
+        <circle cx="84" cy="91" r="19" fill="#18181b"/><circle cx="84" cy="91" r="11.5" fill="#e2e8f0"/>
+        <circle cx="196" cy="91" r="19" fill="#18181b"/><circle cx="196" cy="91" r="11.5" fill="#e2e8f0"/>
+      </g>
+    </svg>`;
+  }
+
+  // 6. BERLINA GENERICA
+  return `<svg viewBox="0 0 280 120" xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="140" cy="113" rx="115" ry="4.5" fill="rgba(15,23,42,0.14)"/>
+    <path d="M 28 88 L 26 70 C 26 60, 32 52, 42 48 L 76 25 C 94 21, 134 21, 156 25 L 196 48 L 246 54 C 255 56, 260 63, 260 74 L 258 88 L 236 90 C 236 74, 188 74, 188 90 L 92 90 C 92 74, 44 74, 44 90 Z"
+          fill="${color}" stroke="${stroke}" stroke-width="1.6"/>
+    <path d="M 52 47 L 79 29 L 134 29 L 134 47 Z" fill="#1e293b"/>
+    <path d="M 140 29 L 154 29 L 186 47 L 140 47 Z" fill="#1e293b"/>
+    <path d="M 244 56 L 258 60 L 256 66 L 242 63 Z" fill="#fef08a"/>
+    <path d="M 27 55 L 39 54 L 38 63 L 26 63 Z" fill="#dc2626"/>
+    ${wheels(91, 20.5)}
+  </svg>`;
+}
+
+function getDeadlineStatus(dl, currentKm) {
+  let worst = { level: 'ok', text: 'In regola' };
+  const today = new Date(); today.setHours(0,0,0,0);
+
+  if (dl.date) {
+    const target = new Date(dl.date);
+    const diffDays = Math.ceil((target - today) / (1000 * 60 * 60 * 24));
+    if (diffDays < 0) return { level: 'bad', text: `Scaduta da ${Math.abs(diffDays)} gg` };
+    if (diffDays <= 30) worst = { level: 'warn', text: `Tra ${diffDays} gg` };
+    else worst = { level: 'ok', text: new Date(dl.date).toLocaleDateString('it-IT') };
+  }
+
+  if (dl.km && currentKm !== undefined) {
+    const diffKm = dl.km - currentKm;
+    if (diffKm <= 0) return { level: 'bad', text: `Superata di ${Math.abs(diffKm).toLocaleString('it-IT')} km` };
+    if (diffKm <= 1500 && worst.level !== 'bad') {
+      worst = { level: 'warn', text: `Tra ${diffKm.toLocaleString('it-IT')} km` };
+    } else if (!dl.date) {
+      worst = { level: 'ok', text: `A ${Number(dl.km).toLocaleString('it-IT')} km` };
+    }
+  }
+  return worst;
+}
+
+function getCarSummaryBadge(car) {
+  if (!car.deadlines || car.deadlines.length === 0) {
+    return `<span class="badge badge-ok">Nessuna scadenza</span>`;
+  }
+  let hasBad = 0, hasWarn = 0;
+  car.deadlines.forEach(d => {
+    const st = getDeadlineStatus(d, car.km);
+    if (st.level === 'bad') hasBad++;
+    else if (st.level === 'warn') hasWarn++;
+  });
+  if (hasBad > 0) return `<span class="badge badge-bad">${hasBad} scadut${hasBad>1?'e':'a'}</span>`;
+  if (hasWarn > 0) return `<span class="badge badge-warn">${hasWarn} in scadenza</span>`;
+  return `<span class="badge badge-ok">Tutto in regola</span>`;
+}
+
+function renderPlate(plate) {
+  if (!plate) return '';
+  return `<div class="plate"><div class="plate-band"><span>I</span></div><div class="plate-num">${escapeHtml(plate)}</div></div>`;
+}
+
+function escapeHtml(str) {
+  return String(str || '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+function render() {
+  const header = document.getElementById('app-header');
+  const main = document.getElementById('app-main');
+
+  if (!state.selectedCarId) {
+    // VISTA GARAGE (HOMEPAGE PULITA)
+    header.innerHTML = `
       <div>
-        <div class="relative">
-          <input type="number" id="quickKmInput" inputmode="numeric"
-            class="w-full px-4 py-3.5 rounded-2xl bg-[#F5F6F8] border border-slate-200 text-2xl font-mono font-extrabold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#007AFF]" />
-          <span class="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">km</span>
-        </div>
-        <div class="flex gap-2 mt-2.5">
-          <button type="button" onclick="addQuickKm(100)" class="flex-1 py-2 rounded-xl bg-slate-100 text-xs font-bold text-slate-700 ios-tap">+100 km</button>
-          <button type="button" onclick="addQuickKm(500)" class="flex-1 py-2 rounded-xl bg-slate-100 text-xs font-bold text-slate-700 ios-tap">+500 km</button>
-          <button type="button" onclick="addQuickKm(1000)" class="flex-1 py-2 rounded-xl bg-slate-100 text-xs font-bold text-slate-700 ios-tap">+1.000 km</button>
-        </div>
+        <div class="header-title">Il mio Garage</div>
+        <div class="header-sub">Libretto digitale veicoli</div>
       </div>
-      <button onclick="saveQuickKm()" class="w-full py-3.5 rounded-2xl bg-[#007AFF] text-white font-bold text-sm shadow-md ios-tap">
-        Conferma Chilometraggio
-      </button>
-    </div>
-  </div>
+      <button class="btn btn-primary btn-sm" onclick="openCarModal()">+ Aggiungi</button>
+    `;
 
-  <!-- ========================================================= -->
-  <!-- MODAL 3: GESTIONE / RINNOVO SCADENZA                      -->
-  <!-- ========================================================= -->
-  <div id="deadlineModal" class="fixed inset-0 z-50 hidden bg-black/45 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
-    <div class="animate-sheet bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
-      <div class="flex items-center justify-between">
-        <h3 id="deadlineModalTitle" class="text-lg font-extrabold text-slate-900">Gestisci Scadenza</h3>
-        <button onclick="closeModal('deadlineModal')" class="p-2 rounded-full bg-slate-100 text-slate-500">
-          <i data-lucide="x" class="w-4 h-4"></i>
-        </button>
-      </div>
-
-      <!-- Azioni Rapide Rinnovo -->
-      <div id="quickRenewBox" class="hidden bg-emerald-50 border border-emerald-200 rounded-2xl p-3.5 space-y-2">
-        <div class="text-xs font-bold text-emerald-800 flex items-center gap-1.5">
-          <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Rinnovo rapido
+    if (state.cars.length === 0) {
+      main.innerHTML = `
+        <div class="empty-garage">
+          <div class="empty-icon">🚗</div>
+          <h2>Il tuo garage è vuoto</h2>
+          <p>Aggiungi la tua auto per tenere sotto controllo revisione, bollo, assicurazione e lo storico dei tagliandi.</p>
+          <button class="btn btn-primary btn-block" onclick="openCarModal()">+ Aggiungi la prima auto</button>
         </div>
-        <div class="flex flex-wrap gap-2">
-          <button type="button" onclick="quickRenewDeadline(12, 0)" class="px-3 py-1.5 rounded-xl bg-emerald-600 text-white text-xs font-bold ios-tap">+1 Anno</button>
-          <button type="button" onclick="quickRenewDeadline(24, 0)" class="px-3 py-1.5 rounded-xl bg-emerald-600 text-white text-xs font-bold ios-tap">+2 Anni (Revisione)</button>
-          <button type="button" onclick="quickRenewDeadline(12, 15000)" class="px-3 py-1.5 rounded-xl bg-[#007AFF] text-white text-xs font-bold ios-tap">+15.000 km / 1 Anno</button>
+        <div class="backup-bar">
+          <button class="btn btn-ghost btn-sm" onclick="triggerImport()">📥 Ripristina Backup</button>
+          <input type="file" id="import-file" accept=".json" style="display:none" onchange="importBackup(event)">
         </div>
-      </div>
-
-      <form id="deadlineForm" onsubmit="saveDeadline(event)" class="space-y-3.5">
-        <input type="hidden" id="dId" />
-
-        <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">Nome Scadenza *</label>
-          <input type="text" id="dTitle" required placeholder="Es. Revisione Ministeriale, Bollo, Tagliando..."
-            class="w-full px-3.5 py-2.5 rounded-xl bg-[#F5F6F8] border border-slate-200/80 text-sm focus:outline-none focus:ring-2 focus:ring-[#007AFF]" />
-        </div>
-
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Categoria</label>
-            <select id="dType" class="w-full px-3 py-2.5 rounded-xl bg-[#F5F6F8] border border-slate-200/80 text-sm focus:outline-none focus:ring-2 focus:ring-[#007AFF]">
-              <option value="revisione">Revisione</option>
-              <option value="bollo">Bollo Auto</option>
-              <option value="assicurazione">Assicurazione RCA</option>
-              <option value="manutenzione">Tagliando / Km</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Data Scadenza</label>
-            <input type="date" id="dDueDate"
-              class="w-full px-3 py-2.5 rounded-xl bg-[#F5F6F8] border border-slate-200/80 text-sm focus:outline-none focus:ring-2 focus:ring-[#007AFF]" />
-          </div>
-        </div>
-
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Soglia Km (opzionale)</label>
-            <input type="number" id="dDueKm" placeholder="Es. 60000" inputmode="numeric"
-              class="w-full px-3.5 py-2.5 rounded-xl bg-[#F5F6F8] border border-slate-200/80 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#007AFF]" />
-          </div>
-          <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Note / Importo</label>
-            <input type="text" id="dMeta" placeholder="Es. € 190 o Allianz"
-              class="w-full px-3.5 py-2.5 rounded-xl bg-[#F5F6F8] border border-slate-200/80 text-sm focus:outline-none focus:ring-2 focus:ring-[#007AFF]" />
-          </div>
-        </div>
-
-        <div class="flex items-center gap-2 pt-2">
-          <button type="button" id="deleteDeadlineBtn" onclick="deleteCurrentDeadline()" class="hidden px-4 py-3.5 rounded-2xl bg-red-50 text-red-600 font-bold text-sm ios-tap">
-            <i data-lucide="trash-2" class="w-4 h-4"></i>
-          </button>
-          <button type="submit" class="flex-1 py-3.5 rounded-2xl bg-[#007AFF] text-white font-bold text-sm shadow-md ios-tap">
-            Salva Scadenza
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- ========================================================= -->
-  <!-- MODAL 4: NUOVO / MODIFICA INTERVENTO MANUTENZIONE         -->
-  <!-- ========================================================= -->
-  <div id="maintenanceModal" class="fixed inset-0 z-50 hidden bg-black/45 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
-    <div class="animate-sheet bg-white w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-6 space-y-4 shadow-2xl max-h-[92vh] overflow-y-auto">
-      <div class="flex items-center justify-between">
-        <h3 id="maintenanceModalTitle" class="text-lg font-extrabold text-slate-900">Registra Intervento</h3>
-        <button onclick="closeModal('maintenanceModal')" class="p-2 rounded-full bg-slate-100 text-slate-500">
-          <i data-lucide="x" class="w-4 h-4"></i>
-        </button>
-      </div>
-
-      <form id="maintenanceForm" onsubmit="saveMaintenance(event)" class="space-y-3.5">
-        <input type="hidden" id="mId" />
-
-        <!-- Voci rapide -->
-        <div class="flex flex-wrap gap-1.5">
-          <button type="button" onclick="fillMaintenancePreset('Tagliando completo', 'Tagliando')" class="px-2.5 py-1 rounded-lg bg-blue-50 text-[#007AFF] text-xs font-semibold ios-tap">Tagliando completo</button>
-          <button type="button" onclick="fillMaintenancePreset('Cambio olio e filtro', 'Tagliando')" class="px-2.5 py-1 rounded-lg bg-blue-50 text-[#007AFF] text-xs font-semibold ios-tap">Cambio olio</button>
-          <button type="button" onclick="fillMaintenancePreset('Cambio gomme stagionale', 'Gomme')" class="px-2.5 py-1 rounded-lg bg-blue-50 text-[#007AFF] text-xs font-semibold ios-tap">Cambio gomme</button>
-          <button type="button" onclick="fillMaintenancePreset('Pastiglie freni', 'Freni')" class="px-2.5 py-1 rounded-lg bg-blue-50 text-[#007AFF] text-xs font-semibold ios-tap">Pastiglie freni</button>
-          <button type="button" onclick="fillMaintenancePreset('Revisione ministeriale', 'Altro')" class="px-2.5 py-1 rounded-lg bg-blue-50 text-[#007AFF] text-xs font-semibold ios-tap">Revisione</button>
-        </div>
-
-        <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">Descrizione Lavoro *</label>
-          <input type="text" id="mTitle" required placeholder="Es. Tagliando annuale + filtro aria"
-            class="w-full px-3.5 py-2.5 rounded-xl bg-[#F5F6F8] border border-slate-200/80 text-sm focus:outline-none focus:ring-2 focus:ring-[#007AFF]" />
-        </div>
-
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Categoria</label>
-            <select id="mCategory" class="w-full px-3 py-2.5 rounded-xl bg-[#F5F6F8] border border-slate-200/80 text-sm focus:outline-none focus:ring-2 focus:ring-[#007AFF]">
-              <option value="Tagliando">Tagliando</option>
-              <option value="Gomme">Gomme</option>
-              <option value="Freni">Freni</option>
-              <option value="Altro">Altro</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Data *</label>
-            <input type="date" id="mDate" required
-              class="w-full px-3 py-2.5 rounded-xl bg-[#F5F6F8] border border-slate-200/80 text-sm focus:outline-none focus:ring-2 focus:ring-[#007AFF]" />
-          </div>
-        </div>
-
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Chilometri (km) *</label>
-            <input type="number" id="mKm" required inputmode="numeric"
-              class="w-full px-3.5 py-2.5 rounded-xl bg-[#F5F6F8] border border-slate-200/80 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#007AFF]" />
-          </div>
-          <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Costo (€)</label>
-            <input type="number" id="mCost" step="0.01" inputmode="decimal" placeholder="0.00"
-              class="w-full px-3.5 py-2.5 rounded-xl bg-[#F5F6F8] border border-slate-200/80 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#007AFF]" />
-          </div>
-        </div>
-
-        <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">Officina / Note</label>
-          <textarea id="mNotes" rows="2" placeholder="Es. Officina Rossi - Olio 5W30..."
-            class="w-full px-3.5 py-2 rounded-xl bg-[#F5F6F8] border border-slate-200/80 text-sm focus:outline-none focus:ring-2 focus:ring-[#007AFF]"></textarea>
-        </div>
-
-        <!-- Foto Fattura / Ricevuta -->
-        <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">Foto Ricevuta / Fattura (opzionale)</label>
-          <div class="flex items-center gap-3">
-            <label class="flex-1 py-2.5 px-3 rounded-xl border border-dashed border-slate-300 text-xs font-semibold text-slate-600 flex items-center justify-center gap-2 cursor-pointer hover:bg-slate-50">
-              <i data-lucide="camera" class="w-4 h-4 text-[#007AFF]"></i>
-              <span id="photoUploadLabel">Allega foto ricevuta</span>
-              <input type="file" id="mPhotoInput" accept="image/*" onchange="handlePhotoUpload(event)" class="hidden" />
-            </label>
-            <div id="photoPreviewContainer" class="hidden relative w-12 h-12 rounded-xl overflow-hidden border border-slate-200 shrink-0">
-              <img id="mPhotoPreview" src="" alt="Anteprima" class="w-full h-full object-cover" />
-              <button type="button" onclick="removeUploadedPhoto()" class="absolute top-0 right-0 w-5 h-5 bg-red-600 text-white flex items-center justify-center text-xs">×</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Promemoria automatico successivo -->
-        <div class="bg-[#F5F6F8] rounded-2xl p-3.5 space-y-2">
-          <label class="flex items-center justify-between cursor-pointer">
-            <span class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-              <i data-lucide="bell" class="w-4 h-4 text-[#007AFF]"></i>
-              Crea promemoria prossimo intervento
-            </span>
-            <input type="checkbox" id="mSetReminder" onchange="toggleReminderFields()" class="w-4 h-4 accent-[#007AFF] rounded" />
-          </label>
-          <div id="reminderFields" class="hidden grid grid-cols-2 gap-2.5 pt-1">
-            <div>
-              <label class="block text-[11px] text-slate-500 mb-1">Tra quanti km</label>
-              <input type="number" id="mReminderKm" placeholder="Es. 15000" inputmode="numeric"
-                class="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs font-mono" />
-            </div>
-            <div>
-              <label class="block text-[11px] text-slate-500 mb-1">Tra quanti mesi</label>
-              <input type="number" id="mReminderMonths" placeholder="Es. 12" inputmode="numeric"
-                class="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs font-mono" />
-            </div>
-          </div>
-        </div>
-
-        <button type="submit" class="w-full py-3.5 rounded-2xl bg-[#007AFF] text-white font-bold text-sm shadow-md ios-tap">
-          Salva Intervento
-        </button>
-      </form>
-    </div>
-  </div>
-
-  <!-- ========================================================= -->
-  <!-- MODAL 5: BACKUP LOCALE & GUIDA INSTALLAZIONE              -->
-  <!-- ========================================================= -->
-  <div id="backupModal" class="fixed inset-0 z-50 hidden bg-black/45 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
-    <div class="animate-sheet bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
-      <div class="flex items-center justify-between">
-        <h3 class="text-lg font-extrabold text-slate-900">Dati & Backup Locale</h3>
-        <button onclick="closeModal('backupModal')" class="p-2 rounded-full bg-slate-100 text-slate-500">
-          <i data-lucide="x" class="w-4 h-4"></i>
-        </button>
-      </div>
-
-      <p class="text-xs text-slate-500 leading-relaxed">
-        Tutti i veicoli, le scadenze e le foto sono salvati <strong>solo nella memoria del tuo telefonino</strong>. Esporta ogni tanto un file di backup per tenerli al sicuro.
-      </p>
-
-      <!-- Barra spazio occupato -->
-      <div class="bg-[#F5F6F8] rounded-2xl p-3.5 space-y-1.5 border border-slate-200/60">
-        <div class="flex justify-between text-xs">
-          <span class="font-semibold text-slate-600">Memoria utilizzata</span>
-          <span id="storageUsageText" class="font-mono font-bold text-slate-900">0 KB / 5 MB</span>
-        </div>
-        <div class="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
-          <div id="storageUsageBar" class="h-full bg-[#007AFF] rounded-full transition-all" style="width: 2%"></div>
-        </div>
-      </div>
-
-      <div class="grid grid-cols-1 gap-2.5">
-        <button onclick="exportBackupJSON()"
-          class="w-full py-3 px-4 rounded-2xl bg-slate-900 text-white font-bold text-xs flex items-center justify-center gap-2 ios-tap">
-          <i data-lucide="download" class="w-4 h-4"></i> Scarica Backup (.json)
-        </button>
-
-        <label class="w-full py-3 px-4 rounded-2xl bg-[#F5F6F8] border border-slate-200 text-slate-800 font-bold text-xs flex items-center justify-center gap-2 cursor-pointer ios-tap">
-          <i data-lucide="upload" class="w-4 h-4"></i> Ripristina da Backup (.json)
-          <input type="file" accept=".json,application/json" onchange="importBackupJSON(event)" class="hidden" />
-        </label>
-      </div>
-
-      <!-- Guida iPhone -->
-    // Tipi di carrozzeria e modelli su misura disponibili con silhouette SVG dettagliate
-    const BODY_TYPES = [
-      { id: 'sandero', label: 'Dacia Sandero', defaultColor: 'white' },
-      { id: 'kadjar', label: 'Renault Kadjar', defaultColor: 'gray' },
-      { id: 'citycar', label: 'Citycar', defaultColor: 'blue' },
-      { id: 'berlina', label: 'Berlina', defaultColor: 'blue' },
-      { id: 'suv', label: 'SUV', defaultColor: 'gray' },
-      { id: 'sw', label: 'Station Wagon', defaultColor: 'silver' },
-      { id: 'sportiva', label: 'Sportiva', defaultColor: 'red' },
-      { id: 'van', label: 'Furgone', defaultColor: 'white' }
-    ];
-
-    // Palette colori carrozzeria con sfumature realistiche
-    const CAR_COLORS = [
-      { id: 'white', label: 'Bianco Ghiaccio', hex: '#F8FAFC', stroke: '#CBD5E1' },
-      { id: 'silver', label: 'Argento', hex: '#CBD5E1', stroke: '#94A3B8' },
-      { id: 'gray', label: 'Grigio Titanio', hex: '#64748B', stroke: '#334155' },
-      { id: 'black', label: 'Nero', hex: '#1E293B', stroke: '#0F172A' },
-      { id: 'blue', label: 'Blu', hex: '#2563EB', stroke: '#1D4ED8' },
-      { id: 'red', label: 'Rosso', hex: '#DC2626', stroke: '#B91C1C' },
-      { id: 'green', label: 'Verde', hex: '#16A34A', stroke: '#15803D' },
-      { id: 'gold', label: 'Sabbia/Oro', hex: '#D97706', stroke: '#B45309' }
-    ];
-
-    let appState = {
-      vehicles: [],
-      deadlines: [],
-      maintenances: []
-    };
-
-    let currentVehicleId = null;
-    let selectedBodyType = 'sandero';
-    let selectedColorId = 'white';
-    let userManuallyPickedColor = false;
-    let selectedCategoryFilter = 'Tutti';
-    let currentUploadedPhotoBase64 = null;
-
-    // ---------------------------------------------------------
-    // 1. GENERATORE SVG AVATAR AUTO DINAMICO (MODELLO + COLORE)
-    // ---------------------------------------------------------
-    function renderCarSVG(bodyType = 'sandero', colorId = 'white', className = 'w-32 h-16') {
-      const colorObj = CAR_COLORS.find(c => c.id === colorId) || CAR_COLORS[0];
-      const fill = colorObj.hex;
-      const stroke = colorObj.stroke;
-
-      // Silhouettes vettoriali pulite e dettagliate vista profilo
-      const shapes = {
-        sandero: `
-          <!-- Ombra a terra -->
-          <ellipse cx="102" cy="76" rx="80" ry="5" fill="#0F172A" opacity="0.12"/>
-          <!-- Scocca Dacia Sandero (Hatchback compatta crossover moderna senza barre sul tetto) -->
-          <path d="M22 55 C21 46, 25 39, 36 37 L53 19 C58 16, 65 15, 86 15 L122 15 C135 15, 143 20, 154 36 L175 39 C182 41, 185 46, 185 54 L185 62 C185 65, 181 67, 175 67 L28 67 C23 67, 22 64, 22 60 Z"
-                fill="${fill}" stroke="${stroke}" stroke-width="2.2" stroke-linejoin="round"/>
-          <!-- Riflesso linea di cintura scolpita -->
-          <path d="M40 42 Q102 39 166 43" fill="none" stroke="#FFFFFF" stroke-width="1.3" opacity="0.55" stroke-linecap="round"/>
-          <!-- Protezioni sottoscocca e passaruota Stepway in plastica scura -->
-          <path d="M23 61 L184 61 L182 67 L25 67 Z" fill="#1E293B"/>
-          <path d="M36 66 A16 16 0 0 1 68 66" fill="none" stroke="#1E293B" stroke-width="3.5" stroke-linecap="round"/>
-          <path d="M134 66 A16 16 0 0 1 166 66" fill="none" stroke="#1E293B" stroke-width="3.5" stroke-linecap="round"/>
-          <!-- Finestrini oscurati con montante B nero -->
-          <path d="M57 20 L89 20 L89 35 L43 35 Z" fill="#1E293B" opacity="0.86"/>
-          <path d="M94 20 L121 20 C130 20, 137 25, 144 35 L94 35 Z" fill="#1E293B" opacity="0.86"/>
-          <!-- Specchietto retrovisore -->
-          <rect x="131" y="33" width="8" height="5" rx="2" fill="#1E293B"/>
-          <!-- Faro anteriore LED con firma luminosa a Y orizzontale Dacia -->
-          <path d="M172 42 L184 43 L184 49 L174 48 Z" fill="#0F172A"/>
-          <path d="M174 45.5 L180 45.5 M180 45.5 L183.5 43.5 M180 45.5 L183.5 47.5" stroke="#F8FAFC" stroke-width="1.4" stroke-linecap="round"/>
-          <!-- Fanale posteriore LED -->
-          <path d="M22 42 L29 42 L28 49 L22 49 Z" fill="#DC2626"/>
-          <line x1="23" y1="45.5" x2="27.5" y2="45.5" stroke="#FCA5A5" stroke-width="1.2"/>
-        `,
-        kadjar: `
-          <!-- Ombra a terra -->
-          <ellipse cx="102" cy="76" rx="85" ry="5.5" fill="#0F172A" opacity="0.13"/>
-          <!-- Barre longitudinali sul tetto cromate -->
-          <path d="M52 10 L132 10" stroke="#94A3B8" stroke-width="2.3" stroke-linecap="round"/>
-          <!-- Scocca Renault Kadjar (SUV medio muscoloso con linea cintura rialzata) -->
-          <path d="M15 52 C15 41, 20 35, 31 33 L47 15 C52 12, 60 11, 82 11 L128 11 C141 11, 149 16, 161 33 L181 36 C188 38, 191 43, 191 52 L191 61 C191 65, 187 67, 180 67 L22 67 C16 67, 15 64, 15 59 Z"
-                fill="${fill}" stroke="${stroke}" stroke-width="2.2" stroke-linejoin="round"/>
-          <!-- Nervatura muscolosa sulle fiancate stile Renault -->
-          <path d="M35 39 Q104 36 172 40" fill="none" stroke="#FFFFFF" stroke-width="1.4" opacity="0.45" stroke-linecap="round"/>
-          <path d="M68 54 Q102 51 136 54" fill="none" stroke="#0F172A" stroke-width="1.5" opacity="0.22" stroke-linecap="round"/>
-          <!-- Protezioni sottoscocca e passaruota SUV con inserto cromato -->
-          <path d="M16 60 L190 60 L188 67 L18 67 Z" fill="#1E293B"/>
-          <line x1="68" y1="63.5" x2="136" y2="63.5" stroke="#CBD5E1" stroke-width="1.6" stroke-linecap="round"/>
-          <path d="M34 66 A17 17 0 0 1 68 66" fill="none" stroke="#1E293B" stroke-width="3.8" stroke-linecap="round"/>
-          <path d="M136 66 A17 17 0 0 1 170 66" fill="none" stroke="#1E293B" stroke-width="3.8" stroke-linecap="round"/>
-          <!-- Finestrini oscurati con profilo cromato inferiore e terza luce -->
-          <path d="M52 16 L88 16 L88 32 L39 32 Z" fill="#1E293B" opacity="0.88"/>
-          <path d="M93 16 L124 16 C134 16, 141 21, 149 32 L93 32 Z" fill="#1E293B" opacity="0.88"/>
-          <path d="M39 32.5 L149 32.5" stroke="#CBD5E1" stroke-width="1.1"/>
-          <!-- Specchietto retrovisore bicolore -->
-          <rect x="134" y="30" width="9" height="5.5" rx="2.2" fill="#1E293B"/>
-          <!-- Faro anteriore LED con caratteristica firma a C (C-Shape) Renault -->
-          <path d="M174 39 L190 41 L190 48 L176 47 Z" fill="#0F172A"/>
-          <path d="M188 41.5 L181 41.5 C178 41.5, 178 46.5, 181 46.5 L188 46.5" fill="none" stroke="#38BDF8" stroke-width="1.5" stroke-linecap="round"/>
-          <!-- Fanale posteriore LED avvolgente -->
-          <path d="M15 39 L26 40 L25 47 L15 47 Z" fill="#DC2626"/>
-          <path d="M17 42 L24 42.5 L23 45 L17 45" fill="none" stroke="#FCA5A5" stroke-width="1.2"/>
-        `,
-        berlina: `
-          <!-- Ombra a terra -->
-          <ellipse cx="100" cy="76" rx="82" ry="5" fill="#0F172A" opacity="0.10"/>
-          <!-- Scocca Berlina -->
-          <path d="M18 56 C18 48, 24 44, 38 42 L62 24 C68 20, 76 19, 96 19 L126 19 C140 19, 148 23, 160 39 L178 42 C185 44, 188 49, 188 56 L188 63 C188 66, 184 68, 178 68 L24 68 C19 68, 18 65, 18 61 Z"
-                fill="${fill}" stroke="${stroke}" stroke-width="2.2" stroke-linejoin="round"/>
-          <!-- Finestrini -->
-          <path d="M66 25 L95 25 L95 40 L47 40 Z" fill="#1E293B" opacity="0.82"/>
-          <path d="M101 25 L125 25 C135 25, 142 29, 150 40 L101 40 Z" fill="#1E293B" opacity="0.82"/>
-          <!-- Dettaglio fari -->
-          <rect x="180" y="47" width="7" height="5" rx="2" fill="#FEF08A"/>
-          <rect x="18" y="47" width="5" height="6" rx="1.5" fill="#EF4444"/>
-        `,
-        citycar: `
-          <ellipse cx="100" cy="76" rx="72" ry="5" fill="#0F172A" opacity="0.10"/>
-          <!-- Scocca Citycar compatta -->
-          <path d="M28 56 C28 47, 33 42, 46 40 L64 21 C70 17, 78 16, 102 16 L124 16 C136 16, 143 22, 152 39 L168 42 C174 44, 177 49, 177 56 L177 63 C177 66, 173 68, 168 68 L34 68 C29 68, 28 65, 28 61 Z"
-                fill="${fill}" stroke="${stroke}" stroke-width="2.2" stroke-linejoin="round"/>
-          <path d="M68 22 L98 22 L98 38 L53 38 Z" fill="#1E293B" opacity="0.82"/>
-          <path d="M104 22 L123 22 C131 22, 137 27, 143 38 L104 38 Z" fill="#1E293B" opacity="0.82"/>
-          <rect x="170" y="47" width="6" height="5" rx="2" fill="#FEF08A"/>
-          <rect x="28" y="47" width="5" height="6" rx="1.5" fill="#EF4444"/>
-        `,
-        suv: `
-          <ellipse cx="100" cy="76" rx="84" ry="5" fill="#0F172A" opacity="0.10"/>
-          <!-- Scocca SUV / Crossover alta -->
-          <path d="M16 53 C16 43, 21 37, 32 35 L46 17 C51 13, 58 12, 76 12 L130 12 C142 12, 149 17, 159 35 L179 38 C186 40, 189 45, 189 53 L189 62 C189 65, 185 67, 179 67 L22 67 C17 67, 16 64, 16 60 Z"
-                fill="${fill}" stroke="${stroke}" stroke-width="2.2" stroke-linejoin="round"/>
-          <!-- Barre sul tetto -->
-          <line x1="56" y1="10" x2="132" y2="10" stroke="#64748B" stroke-width="2.2" stroke-linecap="round"/>
-          <!-- Finestrini -->
-          <path d="M51 18 L86 18 L86 34 L39 34 Z" fill="#1E293B" opacity="0.82"/>
-          <path d="M92 18 L128 18 C137 18, 143 23, 150 34 L92 34 Z" fill="#1E293B" opacity="0.82"/>
-          <rect x="181" y="43" width="7" height="6" rx="2" fill="#FEF08A"/>
-          <rect x="16" y="42" width="5" height="7" rx="1.5" fill="#EF4444"/>
-        `,
-        sw: `
-          <ellipse cx="100" cy="76" rx="85" ry="5" fill="#0F172A" opacity="0.10"/>
-          <!-- Scocca Station Wagon allungata -->
-          <path d="M15 55 C15 46, 19 40, 27 38 L37 19 C41 16, 47 15, 62 15 L128 15 C140 15, 148 20, 159 38 L180 41 C186 43, 189 48, 189 55 L189 63 C189 66, 185 68, 179 68 L21 68 C16 68, 15 65, 15 61 Z"
-                fill="${fill}" stroke="${stroke}" stroke-width="2.2" stroke-linejoin="round"/>
-          <!-- Finestrini (3 luci) -->
-          <path d="M41 21 L66 21 L66 37 L33 37 Z" fill="#1E293B" opacity="0.82"/>
-          <path d="M71 21 L101 21 L101 37 L71 37 Z" fill="#1E293B" opacity="0.82"/>
-          <path d="M106 21 L126 21 C135 21, 142 26, 149 37 L106 37 Z" fill="#1E293B" opacity="0.82"/>
-          <rect x="181" y="46" width="7" height="5" rx="2" fill="#FEF08A"/>
-          <rect x="15" y="44" width="5" height="7" rx="1.5" fill="#EF4444"/>
-        `,
-        sportiva: `
-          <ellipse cx="100" cy="76" rx="84" ry="5" fill="#0F172A" opacity="0.10"/>
-          <!-- Scocca Sportiva / Coupé bassa e filante -->
-          <path d="M16 58 C16 51, 22 47, 36 45 L66 26 C74 22, 84 21, 104 21 L122 21 C134 21, 144 26, 158 41 L182 46 C188 48, 190 52, 190 58 L190 64 C190 67, 186 68, 180 68 L22 68 C17 68, 16 66, 16 62 Z"
-                fill="${fill}" stroke="${stroke}" stroke-width="2.2" stroke-linejoin="round"/>
-          <path d="M71 26 L118 26 C129 26, 138 31, 148 41 L51 41 Z" fill="#1E293B" opacity="0.85"/>
-          <rect x="182" y="50" width="7" height="4" rx="2" fill="#FEF08A"/>
-          <rect x="16" y="50" width="6" height="4" rx="1.5" fill="#EF4444"/>
-        `,
-      const selectedShape = shapes[bodyType] || shapes.sandero;
-
-      // Posizione e dimensione ruote adattate al modello
-      const wheelConfig = {
-        sandero: { w1x: 52, w2x: 150, r: 13.8, alloy: true },
-        kadjar: { w1x: 51, w2x: 153, r: 15.2, alloy: true },
-        citycar: { w1x: 56, w2x: 148, r: 13.2, alloy: false },
-        suv: { w1x: 52, w2x: 152, r: 14.8, alloy: true }
-      };
-      const cfg = wheelConfig[bodyType] || { w1x: 52, w2x: 152, r: 13.5, alloy: false };
-      const w1x = cfg.w1x;
-      const w2x = cfg.w2x;
-      const wheelRadius = cfg.r;
-
-      const renderWheel = (cx) => `
-        <circle cx="${cx}" cy="66" r="${wheelRadius}" fill="#0F172A"/>
-        <circle cx="${cx}" cy="66" r="${wheelRadius * 0.62}" fill="#E2E8F0"/>
-        ${cfg.alloy ? `
-          <circle cx="${cx}" cy="66" r="${wheelRadius * 0.48}" fill="#334155"/>
-          <line x1="${cx - wheelRadius * 0.48}" y1="66" x2="${cx + wheelRadius * 0.48}" y2="66" stroke="#F8FAFC" stroke-width="1.6"/>
-          <line x1="${cx}" y1="${66 - wheelRadius * 0.48}" x2="${cx}" y2="${66 + wheelRadius * 0.48}" stroke="#F8FAFC" stroke-width="1.6"/>
-        ` : ''}
-        <circle cx="${cx}" cy="66" r="${wheelRadius * 0.20}" fill="#0F172A"/>
       `;
+    } else {
+      let html = state.cars.map(car => `
+        <div class="car-card" onclick="selectCar('${car.id}')">
+          <div class="car-card-top">
+            <div class="car-info">
+              <div class="car-name">${escapeHtml(car.name)}</div>
+              <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                ${renderPlate(car.plate)}
+                ${car.year ? `<span style="font-size:12px; color:var(--muted);">${car.year}</span>` : ''}
+              </div>
+            </div>
+            <div class="car-avatar-box">${getCarSVG(car.shape, car.color)}</div>
+          </div>
+          <div class="car-card-footer">
+            <span style="font-weight:700;">${Number(car.km).toLocaleString('it-IT')} km</span>
+            ${getCarSummaryBadge(car)}
+          </div>
+        </div>
+      `).join('');
 
-      return `
-        <svg viewBox="0 0 205 84" class="${className}" xmlns="http://www.w3.org/2000/svg">
-          ${selectedShape}
-          ${renderWheel(w1x)}
-          ${renderWheel(w2x)}
-        </svg>
+      html += `
+        <div class="backup-bar">
+          <button class="btn btn-ghost btn-sm" onclick="exportBackup()">📤 Esporta Backup</button>
+          <button class="btn btn-ghost btn-sm" onclick="triggerImport()">📥 Importa Backup</button>
+          <input type="file" id="import-file" accept=".json" style="display:none" onchange="importBackup(event)">
+        </div>
       `;
+      main.innerHTML = html;
     }
+  } else {
+    // VISTA DETTAGLIO VEICOLO
+    const car = state.cars.find(c => c.id === state.selectedCarId);
+    if (!car) { state.selectedCarId = null; render(); return; }
 
-    // ---------------------------------------------------------
-    // 2. INIZIALIZZAZIONE & PERSISTENZA LOCALSTORAGE
-    // ---------------------------------------------------------
-    function initApp() {
-      loadDataFromStorage();
-      document.getElementById('emptyStateCarPreview').innerHTML = renderCarSVG('sandero', 'white', 'w-44 h-24');
-      renderGarageHome();
-      updateStorageMeter();
-      lucide.createIcons();
-    }
+    header.innerHTML = `
+      <button class="btn btn-ghost" onclick="backToGarage()">‹ Garage</button>
+      <div style="font-weight:800; font-size:16px;">${escapeHtml(car.name)}</div>
+      <button class="btn btn-ghost btn-sm" onclick="openCarModal('${car.id}')">Modifica</button>
+    `;
 
-    function loadDataFromStorage() {
-      try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (raw) {
-          const parsed = JSON.parse(raw);
-          if (parsed && Array.isArray(parsed.vehicles)) {
-            appState = {
-              vehicles: parsed.vehicles || [],
-              deadlines: parsed.deadlines || [],
-              maintenances: parsed.maintenances || []
-            };
-          }
-        }
-      } catch (e) {
-        console.error('Errore lettura LocalStorage:', e);
-      }
-    }
+    let html = `
+      <div class="hero-card">
+        <div class="hero-avatar">${getCarSVG(car.shape, car.color)}</div>
+        <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+          <div>
+            <div style="font-size:20px; font-weight:800;">${escapeHtml(car.name)}</div>
+            <div style="font-size:13px; color:var(--muted);">${car.year ? 'Anno ' + car.year : 'Veicolo registrato'}</div>
+          </div>
+          ${renderPlate(car.plate)}
+        </div>
+        <div class="km-box">
+          <div>
+            <div style="font-size:11px; color:var(--muted); text-transform:uppercase; font-weight:700;">Chilometraggio</div>
+            <div class="km-val">${Number(car.km).toLocaleString('it-IT')} km</div>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="openQuickKm()">+ Aggiorna Km</button>
+        </div>
+      </div>
 
-    function saveDataToStorage() {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
-        updateStorageMeter();
-      } catch (e) {
-        showToast('Memoria quasi piena! Esporta un backup.');
-      }
-    }
+      <div class="tabs">
+        <button class="tab ${state.activeTab==='deadlines'?'active':''}" onclick="switchTab('deadlines')">Scadenze (${(car.deadlines||[]).length})</button>
+        <button class="tab ${state.activeTab==='maint'?'active':''}" onclick="switchTab('maint')">Manutenzioni (${(car.maintenances||[]).length})</button>
+      </div>
+    `;
 
-    // ---------------------------------------------------------
-    // 3. RENDER SCHERMATA PRINCIPALE: IL MIO GARAGE
-    // ---------------------------------------------------------
-    function renderGarageHome() {
-      const emptyState = document.getElementById('garageEmptyState');
-      const listContainer = document.getElementById('garageVehiclesList');
-      const headerAddBtn = document.getElementById('headerAddCarBtn');
-
-      if (appState.vehicles.length === 0) {
-        emptyState.classList.remove('hidden');
-        listContainer.classList.add('hidden');
-        headerAddBtn.classList.add('hidden');
+    if (state.activeTab === 'deadlines') {
+      html += `
+        <div class="section-head">
+          <h3>Scadenze & Controlli</h3>
+          <button class="btn btn-primary btn-sm" onclick="openDeadlineModal()">+ Scadenza</button>
+        </div>
+      `;
+      if (!car.deadlines || car.deadlines.length === 0) {
+        html += `<div class="item-card" style="text-align:center; color:var(--muted); padding:26px;">Nessuna scadenza impostata.<br>Aggiungi revisione, bollo, assicurazione o tagliando.</div>`;
       } else {
-        emptyState.classList.add('hidden');
-        listContainer.classList.remove('hidden');
-        headerAddBtn.classList.remove('hidden');
-
-        listContainer.innerHTML = appState.vehicles.map(v => {
-          const summary = getVehicleHealthSummary(v);
-          const statusDotColor = {
-            green: 'bg-emerald-500',
-            yellow: 'bg-amber-500 animate-pulse',
-            red: 'bg-red-500 animate-ping'
-          }[summary.worstColor];
-
-          const statusTextColor = {
-            green: 'text-emerald-700 bg-emerald-50',
-            yellow: 'text-amber-800 bg-amber-50',
-            red: 'text-red-700 bg-red-50'
-          }[summary.worstColor];
-
+        html += car.deadlines.map(dl => {
+          const st = getDeadlineStatus(dl, car.km);
           return `
-            <div onclick="openVehicleDetail('${v.id}')"
-              class="bg-white rounded-3xl p-5 shadow-xs border border-slate-200/70 cursor-pointer ios-tap hover:shadow-md transition-shadow">
-              <div class="flex items-center justify-between gap-3">
-                <!-- Avatar Auto Dinamico -->
-                <div class="w-32 h-18 bg-[#F5F6F8] rounded-2xl p-2 flex items-center justify-center shrink-0 border border-slate-100">
-                  ${renderCarSVG(v.bodyType, v.colorId, 'w-full h-full')}
+            <div class="item-card">
+              <div class="item-row">
+                <div>
+                  <div class="item-title">${escapeHtml(dl.title)}</div>
+                  <div class="item-meta">
+                    ${dl.date ? 'Data: ' + new Date(dl.date).toLocaleDateString('it-IT') : ''}
+                    ${dl.date && dl.km ? ' • ' : ''}
+                    ${dl.km ? 'Soglia: ' + Number(dl.km).toLocaleString('it-IT') + ' km' : ''}
+                  </div>
+                  ${dl.notes ? `<div class="item-meta" style="margin-top:3px;">${escapeHtml(dl.notes)}</div>` : ''}
                 </div>
-
-                <!-- Info Principali Auto -->
-                <div class="flex-1 min-w-0">
-                  <div class="flex items-center justify-between gap-2">
-                    <h2 class="text-base font-extrabold text-slate-900 truncate">${escapeHtml(v.name)}</h2>
-                    <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400 shrink-0"></i>
-                  </div>
-
-                  <!-- Targa stile italiana + Km -->
-                  <div class="flex items-center gap-2.5 mt-1.5 flex-wrap">
-                    <div class="inline-flex items-stretch rounded-md border border-slate-800 overflow-hidden bg-white text-slate-900">
-                      <div class="w-2.5 bg-blue-700"></div>
-                      <span class="px-1.5 py-0.5 font-mono font-bold text-xs uppercase tracking-wider">${escapeHtml(v.plate)}</span>
-                      <div class="w-2 bg-blue-700"></div>
-                    </div>
-
-                    <span class="text-xs font-mono font-semibold text-slate-500">
-                      ${Number(v.km).toLocaleString('it-IT')} km
-                    </span>
-                  </div>
-
-                  <!-- Stato Scadenze Sintetico -->
-                  <div class="mt-2.5">
-                    <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold ${statusTextColor}">
-                      <span class="w-1.5 h-1.5 rounded-full ${statusDotColor}"></span>
-                      ${summary.label}
-                    </span>
-                  </div>
-                </div>
+                <span class="badge badge-${st.level}">${st.text}</span>
+              </div>
+              <div style="margin-top:10px; display:flex; gap:8px; justify-content:flex-end;">
+                <button class="btn btn-secondary btn-sm" onclick="renewDeadline('${dl.id}')">↻ Rinnova</button>
+                <button class="btn btn-danger btn-sm" onclick="deleteDeadline('${dl.id}')">Elimina</button>
               </div>
             </div>
           `;
         }).join('');
       }
-      lucide.createIcons();
-    }
-
-    function getVehicleHealthSummary(vehicle) {
-      const vDeadlines = appState.deadlines.filter(d => d.vehicleId === vehicle.id);
-      if (vDeadlines.length === 0) {
-        return { worstColor: 'green', label: 'Nessuna scadenza impostata' };
-      }
-
-      let redCount = 0;
-      let yellowCount = 0;
-
-      vDeadlines.forEach(d => {
-        const st = evaluateDeadlineStatus(d, vehicle.km);
-        if (st.color === 'red') redCount++;
-        else if (st.color === 'yellow') yellowCount++;
-      });
-
-      if (redCount > 0) {
-        return {
-          worstColor: 'red',
-          label: redCount === 1 ? '1 scadenza superata' : `${redCount} scadenze superate`
-        };
-      }
-      if (yellowCount > 0) {
-        return {
-          worstColor: 'yellow',
-          label: yellowCount === 1 ? '1 scadenza in arrivo' : `${yellowCount} scadenze in arrivo`
-        };
-      }
-      return { worstColor: 'green', label: 'Tutto in regola' };
-    }
-
-    // ---------------------------------------------------------
-    // 4. NAVIGAZIONE TRA GARAGE E DETTAGLIO AUTO
-    // ---------------------------------------------------------
-    function openVehicleDetail(vehicleId) {
-      currentVehicleId = vehicleId;
-      selectedCategoryFilter = 'Tutti';
-      document.getElementById('view-garage').classList.add('hidden');
-      document.getElementById('view-detail').classList.remove('hidden');
-      switchDetailSubTab('overview');
-      renderVehicleDetail();
-      window.scrollTo({ top: 0, behavior: 'instant' });
-    }
-
-    function backToGarage() {
-      currentVehicleId = null;
-      document.getElementById('view-detail').classList.add('hidden');
-      document.getElementById('view-garage').classList.remove('hidden');
-      renderGarageHome();
-      window.scrollTo({ top: 0, behavior: 'instant' });
-    }
-
-    function switchDetailSubTab(tab) {
-      const btnOverview = document.getElementById('subtab-btn-overview');
-      const btnMaint = document.getElementById('subtab-btn-maintenance');
-      const secOverview = document.getElementById('detail-subtab-overview');
-      const secMaint = document.getElementById('detail-subtab-maintenance');
-
-      if (tab === 'overview') {
-        btnOverview.className = 'py-2 rounded-xl text-xs font-bold bg-white text-slate-900 shadow-xs transition-all';
-        btnMaint.className = 'py-2 rounded-xl text-xs font-bold text-slate-500 transition-all';
-        secOverview.classList.remove('hidden');
-        secMaint.classList.add('hidden');
-      } else {
-        btnMaint.className = 'py-2 rounded-xl text-xs font-bold bg-white text-slate-900 shadow-xs transition-all';
-        btnOverview.className = 'py-2 rounded-xl text-xs font-bold text-slate-500 transition-all';
-        secMaint.classList.remove('hidden');
-        secOverview.classList.add('hidden');
-        renderDetailMaintenances();
-      }
-      lucide.createIcons();
-    }
-
-    function getCurrentVehicle() {
-      return appState.vehicles.find(v => v.id === currentVehicleId);
-    }
-
-    function renderVehicleDetail() {
-      const v = getCurrentVehicle();
-      if (!v) return backToGarage();
-
-      // Hero Card con Avatar Grande
-      const hero = document.getElementById('detailHeroCard');
-      hero.innerHTML = `
-        <div class="flex flex-col items-center text-center">
-          <div class="w-52 h-26 bg-[#F5F6F8] rounded-2xl p-3 flex items-center justify-center border border-slate-100 mb-3">
-            ${renderCarSVG(v.bodyType, v.colorId, 'w-full h-full')}
-          </div>
-
-          <h2 class="text-xl font-extrabold text-slate-900 tracking-tight">${escapeHtml(v.name)}</h2>
-
-          <div class="flex items-center justify-center gap-2 mt-2 flex-wrap">
-            <!-- Targa Italiana -->
-            <div class="inline-flex items-stretch rounded-lg border-2 border-slate-800 overflow-hidden bg-white text-slate-900 shadow-2xs">
-              <div class="w-3 bg-blue-700"></div>
-              <span class="px-2.5 py-0.5 font-mono font-extrabold text-xs uppercase tracking-wider">${escapeHtml(v.plate)}</span>
-              <div class="w-2.5 bg-blue-700"></div>
-            </div>
-
-            ${v.year ? `<span class="px-2.5 py-1 rounded-lg bg-[#F5F6F8] text-xs font-semibold text-slate-600">${v.year}</span>` : ''}
-            ${v.fuel ? `<span class="px-2.5 py-1 rounded-lg bg-[#F5F6F8] text-xs font-semibold text-slate-600">${escapeHtml(v.fuel)}</span>` : ''}
-          </div>
-        </div>
-
-        <!-- Barra Chilometraggio Attuale -->
-        <div class="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between gap-3">
-          <div>
-            <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Chilometri Attuali</div>
-            <div class="text-2xl font-mono font-extrabold text-slate-900 mt-0.5">
-              ${Number(v.km).toLocaleString('it-IT')} <span class="text-xs font-sans font-semibold text-slate-400">km</span>
-            </div>
-          </div>
-
-          <button onclick="openQuickKmModal()"
-            class="px-4 py-2.5 rounded-2xl bg-[#007AFF] hover:bg-blue-600 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs ios-tap">
-            <i data-lucide="gauge" class="w-4 h-4"></i> + Aggiorna Km
-          </button>
+    } else {
+      const totalSpent = (car.maintenances || []).reduce((acc, m) => acc + (parseFloat(m.cost) || 0), 0);
+      html += `
+        <div class="section-head">
+          <h3>Storico Interventi</h3>
+          <button class="btn btn-primary btn-sm" onclick="openMaintModal()">+ Intervento</button>
         </div>
       `;
-
-      renderDetailDeadlines();
-      renderDetailMaintenances();
-      lucide.createIcons();
-    }
-
-    // ---------------------------------------------------------
-    // 5. SCADENZE NEL DETTAGLIO VEICOLO
-    // ---------------------------------------------------------
-    function renderDetailDeadlines() {
-      const v = getCurrentVehicle();
-      if (!v) return;
-
-      const list = document.getElementById('detailDeadlinesList');
-      const vDeadlines = appState.deadlines.filter(d => d.vehicleId === v.id);
-
-      if (vDeadlines.length === 0) {
-        list.innerHTML = `
-          <div class="bg-white rounded-2xl p-6 text-center border border-slate-200/60">
-            <p class="text-xs text-slate-500">Nessuna scadenza registrata per quest'auto.</p>
-            <button onclick="openDeadlineModal()" class="mt-2 text-xs font-bold text-[#007AFF]">+ Aggiungi scadenza</button>
-          </div>
-        `;
-        return;
+      if (totalSpent > 0) {
+        html += `<div class="item-card" style="display:flex; justify-content:space-between; align-items:center; background:#f8fafc;">
+          <span style="font-size:13px; color:var(--muted); font-weight:600;">Totale speso registrato</span>
+          <span style="font-size:17px; font-weight:800;">€ ${totalSpent.toFixed(2)}</span>
+        </div>`;
       }
-
-      const evaluated = vDeadlines.map(d => ({ ...d, status: evaluateDeadlineStatus(d, v.km) }));
-      const priority = { red: 0, yellow: 1, green: 2 };
-      evaluated.sort((a, b) => priority[a.status.color] - priority[b.status.color]);
-
-      list.innerHTML = evaluated.map(item => {
-        const st = item.status;
-        const badgeStyle = {
-          green: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-          yellow: 'bg-amber-50 text-amber-800 border-amber-200',
-          red: 'bg-red-50 text-red-700 border-red-200'
-        }[st.color];
-
-        const dotStyle = {
-          green: 'bg-emerald-500',
-          yellow: 'bg-amber-500 animate-pulse',
-          red: 'bg-red-500 animate-ping'
-        }[st.color];
-
-        const iconName = {
-          revisione: 'shield-check',
-          bollo: 'landmark',
-          assicurazione: 'file-check-2',
-          manutenzione: 'wrench'
-        }[item.type] || 'calendar-clock';
-
-        return `
-          <div onclick="openDeadlineModal('${item.id}')"
-            class="bg-white rounded-2xl p-4 border border-slate-200/60 shadow-2xs flex items-center justify-between gap-3 cursor-pointer ios-tap">
-            <div class="flex items-start gap-3 min-w-0">
-              <div class="w-10 h-10 rounded-xl bg-[#F5F6F8] text-slate-700 flex items-center justify-center shrink-0 mt-0.5">
-                <i data-lucide="${iconName}" class="w-5 h-5"></i>
-              </div>
-              <div class="min-w-0">
-                <div class="font-bold text-sm text-slate-900 truncate">${escapeHtml(item.title)}</div>
-                <div class="text-xs text-slate-500 mt-0.5 space-y-0.5">
-                  ${item.dueDate ? `<div>Data: <strong>${formatDateIT(item.dueDate)}</strong></div>` : ''}
-                  ${item.dueKm ? `<div>Soglia: <strong class="font-mono">${Number(item.dueKm).toLocaleString('it-IT')} km</strong></div>` : ''}
-                  ${item.meta ? `<div class="text-[11px] text-slate-400 truncate">${escapeHtml(item.meta)}</div>` : ''}
-                </div>
-              </div>
-            </div>
-
-            <div class="flex flex-col items-end gap-1.5 shrink-0">
-              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border ${badgeStyle}">
-                <span class="w-1.5 h-1.5 rounded-full ${dotStyle}"></span>
-                ${st.label}
-              </span>
-              <span class="text-[10px] font-bold text-[#007AFF]">Rinnova →</span>
-            </div>
-          </div>
-        `;
-      }).join('');
-    }
-
-    function evaluateDeadlineStatus(deadline, currentKm) {
-      let color = 'green';
-      let parts = [];
-
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-
-      if (deadline.dueDate) {
-        const due = new Date(deadline.dueDate);
-        due.setHours(0, 0, 0, 0);
-        const diffDays = Math.ceil((due - today) / (1000 * 60 * 60 * 24));
-
-        if (diffDays < 0) {
-          color = 'red';
-          parts.push(`Scaduta da ${Math.abs(diffDays)} gg`);
-        } else if (diffDays === 0) {
-          color = 'red';
-          parts.push('Scade oggi!');
-        } else if (diffDays <= 30) {
-          if (color !== 'red') color = 'yellow';
-          parts.push(`Tra ${diffDays} gg`);
-        } else {
-          parts.push(`Tra ${diffDays} gg`);
-        }
-      }
-
-      if (deadline.dueKm && Number(deadline.dueKm) > 0) {
-        const diffKm = Number(deadline.dueKm) - Number(currentKm);
-        if (diffKm <= 0) {
-          color = 'red';
-          parts.push(`Superata di ${Math.abs(diffKm).toLocaleString('it-IT')} km`);
-        } else if (diffKm <= 1500) {
-          if (color !== 'red') color = 'yellow';
-          parts.push(`-${diffKm.toLocaleString('it-IT')} km`);
-        } else if (!deadline.dueDate) {
-          parts.push(`-${diffKm.toLocaleString('it-IT')} km`);
-        }
-      }
-
-      return { color, label: parts.join(' • ') || 'Attiva' };
-    }
-
-    // ---------------------------------------------------------
-    // 6. MANUTENZIONI NEL DETTAGLIO VEICOLO
-    // ---------------------------------------------------------
-    const MAINT_CATEGORIES = ['Tutti', 'Tagliando', 'Gomme', 'Freni', 'Altro'];
-
-    function renderDetailMaintenances() {
-      const v = getCurrentVehicle();
-      if (!v) return;
-
-      // Render filtri categoria
-      const filtersEl = document.getElementById('detailCategoryFilters');
-      filtersEl.innerHTML = MAINT_CATEGORIES.map(cat => {
-        const active = cat === selectedCategoryFilter;
-        return `
-          <button onclick="setMaintFilter('${cat}')"
-            class="px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-colors ios-tap ${
-              active ? 'bg-slate-900 text-white' : 'bg-white text-slate-600 border border-slate-200/80'
-            }">
-            ${cat}
-          </button>
-        `;
-      }).join('');
-
-      const vMaint = appState.maintenances.filter(m => m.vehicleId === v.id);
-      const currentYear = new Date().getFullYear();
-      document.getElementById('detailYearLabel').textContent = currentYear;
-
-      const yearSum = vMaint
-        .filter(m => new Date(m.date).getFullYear() === currentYear)
-        .reduce((sum, m) => sum + (parseFloat(m.cost) || 0), 0);
-      const allSum = vMaint.reduce((sum, m) => sum + (parseFloat(m.cost) || 0), 0);
-
-      document.getElementById('detailYearTotal').textContent = `€ ${yearSum.toLocaleString('it-IT', { maximumFractionDigits: 2 })}`;
-      document.getElementById('detailAllTimeTotal').textContent = `€ ${allSum.toLocaleString('it-IT', { maximumFractionDigits: 2 })}`;
-
-      const query = (document.getElementById('maintenanceSearchInput').value || '').toLowerCase().trim();
-      const filtered = vMaint
-        .filter(m => selectedCategoryFilter === 'Tutti' || m.category === selectedCategoryFilter)
-        .filter(m => !query || m.title.toLowerCase().includes(query) || (m.notes && m.notes.toLowerCase().includes(query)))
-        .sort((a, b) => new Date(b.date) - new Date(a.date));
-
-      const listEl = document.getElementById('detailMaintenanceList');
-      if (filtered.length === 0) {
-        listEl.innerHTML = `
-          <div class="bg-white rounded-3xl p-8 text-center border border-slate-200/60 space-y-2">
-            <div class="w-11 h-11 rounded-2xl bg-[#F5F6F8] text-slate-400 mx-auto flex items-center justify-center">
-              <i data-lucide="wrench" class="w-5 h-5"></i>
-            </div>
-            <p class="text-sm font-bold text-slate-800">Nessun intervento registrato</p>
-            <p class="text-xs text-slate-500">Tocca "+ Intervento" per annotare tagliandi, gomme o riparazioni.</p>
-          </div>
-        `;
+      if (!car.maintenances || car.maintenances.length === 0) {
+        html += `<div class="item-card" style="text-align:center; color:var(--muted); padding:26px;">Nessun intervento registrato.<br>Salva qui tagliandi, cambi gomme e riparazioni.</div>`;
       } else {
-        listEl.innerHTML = filtered.map(m => `
-          <div class="bg-white rounded-2xl p-4 border border-slate-200/60 shadow-2xs space-y-2">
-            <div class="flex items-start justify-between gap-3">
-              <div class="min-w-0">
-                <div class="flex items-center gap-2 flex-wrap">
-                  <span class="px-2 py-0.5 rounded-md bg-blue-50 text-[#007AFF] text-[10px] font-bold">${escapeHtml(m.category)}</span>
-                  <span class="text-xs text-slate-400 font-medium">${formatDateIT(m.date)} • <strong class="font-mono text-slate-600">${Number(m.km).toLocaleString('it-IT')} km</strong></span>
-                </div>
-                <h4 class="font-bold text-sm text-slate-900 mt-1">${escapeHtml(m.title)}</h4>
-              </div>
-
-              <div class="text-right shrink-0">
-                ${m.cost ? `<div class="font-mono font-extrabold text-sm text-slate-900">€ ${parseFloat(m.cost).toLocaleString('it-IT', { minimumFractionDigits: 2 })}</div>` : ''}
-                <div class="flex items-center justify-end gap-1 mt-1">
-                  <button onclick="openMaintenanceModal('${m.id}')" class="p-1.5 rounded-lg text-slate-400 hover:text-[#007AFF] hover:bg-slate-100">
-                    <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
-                  </button>
-                  <button onclick="confirmDeleteMaintenance('${m.id}')" class="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-slate-100">
-                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            ${m.notes ? `<p class="text-xs text-slate-500 bg-[#F5F6F8] p-2.5 rounded-xl leading-relaxed">${escapeHtml(m.notes)}</p>` : ''}
-
-            ${m.photo ? `
+        const sorted = [...car.maintenances].sort((a,b) => new Date(b.date) - new Date(a.date));
+        html += sorted.map(m => `
+          <div class="item-card">
+            <div class="item-row">
               <div>
-                <button onclick="viewPhoto('${m.photo}')" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#F5F6F8] text-xs font-bold text-slate-700 ios-tap">
-                  <i data-lucide="image" class="w-3.5 h-3.5 text-[#007AFF]"></i> Vedi foto ricevuta
-                </button>
+                <div class="item-title">${escapeHtml(m.title)}</div>
+                <div class="item-meta">${new Date(m.date).toLocaleDateString('it-IT')} • ${Number(m.km).toLocaleString('it-IT')} km • <b>${escapeHtml(m.category)}</b></div>
+                ${m.notes ? `<div class="item-meta" style="margin-top:4px;">${escapeHtml(m.notes)}</div>` : ''}
               </div>
-            ` : ''}
+              ${m.cost ? `<div style="font-weight:800; font-size:15px;">€ ${parseFloat(m.cost).toFixed(2)}</div>` : ''}
+            </div>
+            ${m.photo ? `<img src="${m.photo}" class="receipt-thumb" alt="Ricevuta">` : ''}
+            <div style="margin-top:8px; text-align:right;">
+              <button class="btn btn-danger btn-sm" onclick="deleteMaint('${m.id}')">Elimina</button>
+            </div>
           </div>
         `).join('');
       }
-      lucide.createIcons();
     }
 
-    function setMaintFilter(cat) {
-      selectedCategoryFilter = cat;
-      renderDetailMaintenances();
-    }
+    html += `
+      <div style="margin-top:32px; text-align:center;">
+        <button class="btn btn-danger btn-sm" onclick="deleteCar('${car.id}')">Elimina questo veicolo</button>
+      </div>
+    `;
+    main.innerHTML = html;
+  }
+}
 
-    // ---------------------------------------------------------
-    // 7. CONFIGURATORE AGGIUNGI / MODIFICA AUTO
-    // ---------------------------------------------------------
-    function openVehicleModal(editId = null) {
-      document.getElementById('vehicleForm').reset();
-      const delBtn = document.getElementById('deleteVehicleBtn');
-      userManuallyPickedColor = false;
+/* Navigation */
+function selectCar(id) { state.selectedCarId = id; state.activeTab = 'deadlines'; render(); window.scrollTo(0,0); }
+function backToGarage() { state.selectedCarId = null; render(); window.scrollTo(0,0); }
+function switchTab(t) { state.activeTab = t; render(); }
 
-      if (editId) {
-        const v = appState.vehicles.find(item => item.id === editId);
-        if (!v) return;
-        document.getElementById('vehicleModalTitle').textContent = 'Modifica Auto';
-        document.getElementById('vId').value = v.id;
-        document.getElementById('vName').value = v.name;
-        document.getElementById('vPlate').value = v.plate;
-        document.getElementById('vKm').value = v.km;
-        document.getElementById('vYear').value = v.year || '';
-        document.getElementById('vFuel').value = v.fuel || 'Benzina';
-        selectedBodyType = v.bodyType || 'sandero';
-        selectedColorId = v.colorId || 'white';
-        userManuallyPickedColor = true;
-        delBtn.classList.remove('hidden');
-      } else {
-        document.getElementById('vehicleModalTitle').textContent = 'Aggiungi Auto';
-        document.getElementById('vId').value = '';
-        document.getElementById('vYear').value = new Date().getFullYear();
-        selectedBodyType = 'sandero';
-        selectedColorId = 'white';
-        delBtn.classList.add('hidden');
+/* Modals */
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+function renderSwatches(selectedHex) {
+  const box = document.getElementById('color-swatches');
+  box.innerHTML = COLORS.map(c => `
+    <div class="swatch ${c.hex.toLowerCase()===selectedHex.toLowerCase()?'selected':''}"
+         style="background:${c.hex};" title="${c.name}"
+         onclick="selectColor('${c.hex}')"></div>
+  `).join('');
+}
+
+function selectColor(hex) {
+  document.getElementById('car-color').value = hex;
+  renderSwatches(hex);
+  updateCarPreview();
+}
+
+function updateCarPreview() {
+  const shape = document.getElementById('car-shape').value;
+  const color = document.getElementById('car-color').value;
+  document.getElementById('car-svg-preview').innerHTML = getCarSVG(shape, color);
+}
+
+function autoDetectCar(val) {
+  const v = val.toLowerCase();
+  if (v.includes('sandero')) {
+    document.getElementById('car-shape').value = 'sandero';
+    selectColor('#f8fafc');
+  } else if (v.includes('kadjar')) {
+    document.getElementById('car-shape').value = 'kadjar';
+    selectColor('#717882');
+  }
+}
+
+function openCarModal(editId = null) {
+  document.getElementById('form-car').reset();
+  if (editId) {
+    const car = state.cars.find(c => c.id === editId);
+    document.getElementById('modal-car-title').textContent = 'Modifica Veicolo';
+    document.getElementById('car-id').value = car.id;
+    document.getElementById('car-name').value = car.name;
+    document.getElementById('car-shape').value = car.shape || 'sandero';
+    document.getElementById('car-plate').value = car.plate || '';
+    document.getElementById('car-km').value = car.km;
+    document.getElementById('car-year').value = car.year || '';
+    selectColor(car.color || '#f8fafc');
+  } else {
+    document.getElementById('modal-car-title').textContent = 'Aggiungi Auto';
+    document.getElementById('car-id').value = '';
+    document.getElementById('car-shape').value = 'sandero';
+    selectColor('#f8fafc');
+  }
+  openModal('modal-car');
+}
+
+function saveCar(e) {
+  e.preventDefault();
+  const id = document.getElementById('car-id').value;
+  const data = {
+    name: document.getElementById('car-name').value.trim(),
+    shape: document.getElementById('car-shape').value,
+    plate: document.getElementById('car-plate').value.trim().toUpperCase(),
+    color: document.getElementById('car-color').value,
+    km: parseInt(document.getElementById('car-km').value, 10) || 0,
+    year: document.getElementById('car-year').value.trim()
+  };
+
+  if (id) {
+    const idx = state.cars.findIndex(c => c.id === id);
+    if (idx > -1) state.cars[idx] = { ...state.cars[idx], ...data };
+  } else {
+    state.cars.push({
+      id: 'car_' + Date.now(),
+      ...data,
+      deadlines: [],
+      maintenances: []
+    });
+  }
+  persist();
+  closeModal('modal-car');
+  render();
+}
+
+function deleteCar(id) {
+  if (!confirm('Eliminare definitivamente questo veicolo e tutto il suo storico?')) return;
+  state.cars = state.cars.filter(c => c.id !== id);
+  state.selectedCarId = null;
+  persist();
+  render();
+}
+
+/* Quick Km */
+function openQuickKm() {
+  const car = state.cars.find(c => c.id === state.selectedCarId);
+  document.getElementById('quick-km-input').value = car.km;
+  openModal('modal-km');
+}
+function saveQuickKm(e) {
+  e.preventDefault();
+  const car = state.cars.find(c => c.id === state.selectedCarId);
+  car.km = parseInt(document.getElementById('quick-km-input').value, 10) || car.km;
+  persist();
+  closeModal('modal-km');
+  render();
+}
+
+/* Deadlines */
+function onDeadlineTypeChange() {
+  const val = document.getElementById('dl-type').value;
+  document.getElementById('dl-custom-group').style.display = val === 'Altro' ? 'block' : 'none';
+}
+function openDeadlineModal() {
+  document.getElementById('form-deadline').reset();
+  onDeadlineTypeChange();
+  openModal('modal-deadline');
+}
+function saveDeadline(e) {
+  e.preventDefault();
+  const car = state.cars.find(c => c.id === state.selectedCarId);
+  const type = document.getElementById('dl-type').value;
+  const title = type === 'Altro' ? (document.getElementById('dl-custom-name').value.trim() || 'Promemoria') : type;
+  const date = document.getElementById('dl-date').value;
+  const kmVal = document.getElementById('dl-km').value;
+  if (!date && !kmVal) { alert('Inserisci almeno una data o un chilometraggio.'); return; }
+
+  car.deadlines = car.deadlines || [];
+  car.deadlines.push({
+    id: 'dl_' + Date.now(),
+    title,
+    date: date || null,
+    km: kmVal ? parseInt(kmVal, 10) : null,
+    notes: document.getElementById('dl-notes').value.trim()
+  });
+  persist();
+  closeModal('modal-deadline');
+  render();
+}
+function renewDeadline(dlId) {
+  const car = state.cars.find(c => c.id === state.selectedCarId);
+  const dl = car.deadlines.find(d => d.id === dlId);
+  if (!dl) return;
+  if (dl.date) {
+    const d = new Date(dl.date);
+    const years = dl.title.toLowerCase().includes('revisione') ? 2 : 1;
+    d.setFullYear(d.getFullYear() + years);
+    dl.date = d.toISOString().split('T')[0];
+  }
+  if (dl.km) {
+    dl.km = car.km + 15000;
+  }
+  persist();
+  render();
+}
+function deleteDeadline(dlId) {
+  const car = state.cars.find(c => c.id === state.selectedCarId);
+  car.deadlines = car.deadlines.filter(d => d.id !== dlId);
+  persist();
+  render();
+}
+
+/* Maintenance */
+function openMaintModal() {
+  const car = state.cars.find(c => c.id === state.selectedCarId);
+  document.getElementById('form-maint').reset();
+  document.getElementById('m-date').value = new Date().toISOString().split('T')[0];
+  document.getElementById('m-km').value = car.km;
+  document.getElementById('m-photo-data').value = '';
+  openModal('modal-maint');
+}
+
+function handlePhoto(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    const img = new Image();
+    img.onload = function() {
+      const canvas = document.createElement('canvas');
+      const maxW = 800;
+      const scale = Math.min(1, maxW / img.width);
+      canvas.width = img.width * scale;
+      canvas.height = img.height * scale;
+      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+      document.getElementById('m-photo-data').value = canvas.toDataURL('image/jpeg', 0.65);
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function saveMaint(e) {
+  e.preventDefault();
+  const car = state.cars.find(c => c.id === state.selectedCarId);
+  const km = parseInt(document.getElementById('m-km').value, 10) || car.km;
+  if (km > car.km) car.km = km;
+
+  car.maintenances = car.maintenances || [];
+  car.maintenances.push({
+    id: 'm_' + Date.now(),
+    title: document.getElementById('m-title').value.trim(),
+    date: document.getElementById('m-date').value,
+    km,
+    category: document.getElementById('m-cat').value,
+    cost: document.getElementById('m-cost').value,
+    notes: document.getElementById('m-notes').value.trim(),
+    photo: document.getElementById('m-photo-data').value || null
+  });
+  persist();
+  closeModal('modal-maint');
+  render();
+}
+
+function deleteMaint(mId) {
+  const car = state.cars.find(c => c.id === state.selectedCarId);
+  car.maintenances = car.maintenances.filter(m => m.id !== mId);
+  persist();
+  render();
+}
+
+/* Backup */
+function exportBackup() {
+  const blob = new Blob([JSON.stringify(state.cars, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `libretto-auto-backup-${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+}
+function triggerImport() { document.getElementById('import-file').click(); }
+function importBackup(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if (Array.isArray(data)) {
+        state.cars = data;
+        persist();
+        render();
+        alert('Backup ripristinato con successo!');
       }
+    } catch { alert('File di backup non valido.'); }
+  };
+  reader.readAsText(file);
+}
 
-      renderVehicleConfiguratorUI();
-      openModal('vehicleModal');
-    }
-
-    function handleModelNameAutoDetect(rawValue) {
-      const val = (rawValue || '').toLowerCase();
-      let detectedType = null;
-
-      if (val.includes('sandero') || val.includes('dacia')) {
-        detectedType = 'sandero';
-      } else if (val.includes('kadjar') || val.includes('renault')) {
-        detectedType = 'kadjar';
-      } else if (val.includes('panda') || val.includes('500') || val.includes('yaris') || val.includes('clio')) {
-        detectedType = 'citycar';
-      } else if (val.includes('suv') || val.includes('tucson') || val.includes('tiguan') || val.includes('qashqai')) {
-        detectedType = 'suv';
-      } else if (val.includes('sw') || val.includes('wagon') || val.includes('touring') || val.includes('avant')) {
-        detectedType = 'sw';
-      }
-
-      if (detectedType && detectedType !== selectedBodyType) {
-        selectedBodyType = detectedType;
-        if (!userManuallyPickedColor) {
-          const preset = BODY_TYPES.find(b => b.id === detectedType);
-          if (preset && preset.defaultColor) {
-            selectedColorId = preset.defaultColor;
-          }
-        }
-        renderVehicleConfiguratorUI();
-      }
-    }
-
-    function editCurrentVehicle() {
-      if (currentVehicleId) openVehicleModal(currentVehicleId);
-    }
-
-    function renderVehicleConfiguratorUI() {
-      // Anteprima grande
-      document.getElementById('liveCarAvatarPreview').innerHTML = renderCarSVG(selectedBodyType, selectedColorId, 'w-52 h-24');
-
-      // Griglia carrozzerie (4 colonne compatte su schermi medi, 2/3 su mobile)
-      const bodyContainer = document.getElementById('bodyTypeSelector');
-      bodyContainer.className = 'grid grid-cols-2 sm:grid-cols-4 gap-2';
-      bodyContainer.innerHTML = BODY_TYPES.map(b => {
-        const isSelected = b.id === selectedBodyType;
-        return `
-          <button type="button" onclick="selectBodyType('${b.id}')"
-            class="p-2 rounded-2xl border text-center flex flex-col items-center gap-1 transition-all ios-tap ${
-              isSelected
-                ? 'bg-blue-50/70 border-[#007AFF] ring-1 ring-[#007AFF]'
-                : 'bg-[#F5F6F8] border-slate-200/70 opacity-85 hover:opacity-100'
-            }">
-            ${renderCarSVG(b.id, selectedColorId, 'w-20 h-9')}
-            <span class="text-[11px] font-bold leading-tight ${isSelected ? 'text-[#007AFF]' : 'text-slate-600'}">${b.label}</span>
-          </button>
-        `;
-      }).join('');
-
-      // Swatches colori
-      const colorContainer = document.getElementById('colorSwatchSelector');
-      colorContainer.innerHTML = CAR_COLORS.map(c => {
-        const isSelected = c.id === selectedColorId;
-        return `
-          <button type="button" onclick="selectCarColor('${c.id}')" title="${c.label}"
-            class="w-7 h-7 rounded-full border-2 flex items-center justify-center transition-transform ios-tap ${
-              isSelected ? 'scale-115 ring-2 ring-offset-2 ring-[#007AFF]' : 'border-slate-300'
-            }"
-            style="background-color: ${c.hex};">
-            ${isSelected ? `<span class="w-2 h-2 rounded-full ${c.id === 'white' || c.id === 'silver' ? 'bg-slate-800' : 'bg-white'}"></span>` : ''}
-          </button>
-        `;
-      }).join('');
-    }
-
-    function selectBodyType(bodyId) {
-      selectedBodyType = bodyId;
-      if (!userManuallyPickedColor) {
-        const preset = BODY_TYPES.find(b => b.id === bodyId);
-        if (preset && preset.defaultColor) {
-          selectedColorId = preset.defaultColor;
-        }
-      }
-      renderVehicleConfiguratorUI();
-    }
-
-    function selectCarColor(colorId) {
-      userManuallyPickedColor = true;
-      selectedColorId = colorId;
-      renderVehicleConfiguratorUI();
-    }
-
-    function saveVehicle(event) {
-      event.preventDefault();
-      const id = document.getElementById('vId').value;
-      const name = document.getElementById('vName').value.trim();
-      const plate = document.getElementById('vPlate').value.trim().toUpperCase();
-      const km = parseInt(document.getElementById('vKm').value, 10) || 0;
-      const year = document.getElementById('vYear').value ? parseInt(document.getElementById('vYear').value, 10) : null;
-      const fuel = document.getElementById('vFuel').value;
-
-      if (id) {
-        const idx = appState.vehicles.findIndex(v => v.id === id);
-        if (idx !== -1) {
-          appState.vehicles[idx] = {
-            ...appState.vehicles[idx],
-            name, plate, km, year, fuel,
-            bodyType: selectedBodyType,
-            colorId: selectedColorId
-          };
-        }
-        saveDataToStorage();
-        closeModal('vehicleModal');
-        renderVehicleDetail();
-        showToast('Dati auto aggiornati!');
-      } else {
-        const newId = 'veh_' + Date.now();
-        appState.vehicles.push({
-          id: newId,
-          name, plate, km, year, fuel,
-          bodyType: selectedBodyType,
-          colorId: selectedColorId
-        });
-
-        // Pre-popola le 3 scadenze amministrative italiane base pronte da personalizzare
-        const nextYear = new Date();
-        nextYear.setFullYear(nextYear.getFullYear() + 1);
-        const nextYearStr = nextYear.toISOString().split('T')[0];
-
-        appState.deadlines.push(
-          { id: 'dl_' + Date.now() + '_1', vehicleId: newId, title: 'Revisione Ministeriale', type: 'revisione', dueDate: nextYearStr, dueKm: null, meta: 'Imposta data esatta' },
-          { id: 'dl_' + Date.now() + '_2', vehicleId: newId, title: 'Assicurazione RCA', type: 'assicurazione', dueDate: nextYearStr, dueKm: null, meta: 'Imposta scadenza polizza' },
-          { id: 'dl_' + Date.now() + '_3', vehicleId: newId, title: 'Bollo Auto', type: 'bollo', dueDate: nextYearStr, dueKm: null, meta: 'Imposta scadenza regionale' }
-        );
-
-        saveDataToStorage();
-        closeModal('vehicleModal');
-        renderGarageHome();
-        showToast('Auto aggiunta al garage!');
-      }
-    }
-
-    function confirmDeleteCurrentVehicle() {
-      const v = getCurrentVehicle();
-      if (!v) return;
-      openConfirmDialog(
-        `Eliminare ${v.name}?`,
-        'Verranno rimossi definitivamente anche tutti gli interventi e le scadenze collegati a questa auto.',
-        () => {
-          appState.vehicles = appState.vehicles.filter(item => item.id !== v.id);
-          appState.deadlines = appState.deadlines.filter(d => d.vehicleId !== v.id);
-          appState.maintenances = appState.maintenances.filter(m => m.vehicleId !== v.id);
-          saveDataToStorage();
-          closeModal('vehicleModal');
-          backToGarage();
-          showToast('Auto rimossa dal garage.');
-        }
-      );
-    }
-
-    // ---------------------------------------------------------
-    // 8. AZIONI MODALI SECONDARIE (KM, SCADENZE, MANUTENZIONI)
-    // ---------------------------------------------------------
-    function openModal(id) {
-      document.getElementById(id).classList.remove('hidden');
-      lucide.createIcons();
-    }
-
-    function closeModal(id) {
-      document.getElementById(id).classList.add('hidden');
-    }
-
-    function openQuickKmModal() {
-      const v = getCurrentVehicle();
-      if (!v) return;
-      document.getElementById('quickKmInput').value = v.km;
-      openModal('updateKmModal');
-    }
-
-    function addQuickKm(delta) {
-      const input = document.getElementById('quickKmInput');
-      input.value = (parseInt(input.value, 10) || 0) + delta;
-    }
-
-    function saveQuickKm() {
-      const v = getCurrentVehicle();
-      const newKm = parseInt(document.getElementById('quickKmInput').value, 10);
-      if (isNaN(newKm) || newKm < 0) return;
-      v.km = newKm;
-      saveDataToStorage();
-      closeModal('updateKmModal');
-      renderVehicleDetail();
-      showToast('Chilometri aggiornati!');
-    }
-
-    // Scadenze
-    function openDeadlineModal(editId = null) {
-      document.getElementById('deadlineForm').reset();
-      const quickBox = document.getElementById('quickRenewBox');
-      const delBtn = document.getElementById('deleteDeadlineBtn');
-
-      if (editId) {
-        const d = appState.deadlines.find(item => item.id === editId);
-        if (!d) return;
-        document.getElementById('deadlineModalTitle').textContent = 'Modifica / Rinnova Scadenza';
-        document.getElementById('dId').value = d.id;
-        document.getElementById('dTitle').value = d.title;
-        document.getElementById('dType').value = d.type;
-        document.getElementById('dDueDate').value = d.dueDate || '';
-        document.getElementById('dDueKm').value = d.dueKm || '';
-        document.getElementById('dMeta').value = d.meta || '';
-        quickBox.classList.remove('hidden');
-        delBtn.classList.remove('hidden');
-      } else {
-        document.getElementById('deadlineModalTitle').textContent = 'Nuova Scadenza';
-        document.getElementById('dId').value = '';
-        quickBox.classList.add('hidden');
-        delBtn.classList.add('hidden');
-      }
-      openModal('deadlineModal');
-    }
-
-    function quickRenewDeadline(addMonths, addKm) {
-      const v = getCurrentVehicle();
-      const dateInput = document.getElementById('dDueDate');
-      const kmInput = document.getElementById('dDueKm');
-
-      if (addMonths > 0) {
-        const base = dateInput.value ? new Date(dateInput.value) : new Date();
-        const now = new Date();
-        const ref = base < now ? now : base;
-        ref.setMonth(ref.getMonth() + addMonths);
-        dateInput.value = ref.toISOString().split('T')[0];
-      }
-      if (addKm > 0 && v) {
-        const baseKm = Math.max(Number(v.km), parseInt(kmInput.value, 10) || 0);
-        kmInput.value = baseKm + addKm;
-      }
-      showToast('Nuova data calcolata! Premi Salva.');
-    }
-
-    function saveDeadline(event) {
-      event.preventDefault();
-      const v = getCurrentVehicle();
-      if (!v) return;
-
-      const id = document.getElementById('dId').value;
-      const title = document.getElementById('dTitle').value.trim();
-      const type = document.getElementById('dType').value;
-      const dueDate = document.getElementById('dDueDate').value || null;
-      const dueKm = document.getElementById('dDueKm').value ? parseInt(document.getElementById('dDueKm').value, 10) : null;
-      const meta = document.getElementById('dMeta').value.trim();
-
-      if (!dueDate && !dueKm) {
-        showToast('Inserisci una data o una soglia km.');
-        return;
-      }
-
-      if (id) {
-        const idx = appState.deadlines.findIndex(d => d.id === id);
-        if (idx !== -1) appState.deadlines[idx] = { ...appState.deadlines[idx], title, type, dueDate, dueKm, meta };
-      } else {
-        appState.deadlines.push({
-          id: 'dl_' + Date.now(),
-          vehicleId: v.id,
-          title, type, dueDate, dueKm, meta
-        });
-      }
-
-      saveDataToStorage();
-      closeModal('deadlineModal');
-      renderDetailDeadlines();
-      showToast('Scadenza salvata!');
-    }
-
-    function deleteCurrentDeadline() {
-      const id = document.getElementById('dId').value;
-      if (!id) return;
-      appState.deadlines = appState.deadlines.filter(d => d.id !== id);
-      saveDataToStorage();
-      closeModal('deadlineModal');
-      renderDetailDeadlines();
-      showToast('Scadenza eliminata.');
-    }
-
-    // Manutenzioni
-    function openMaintenanceModal(editId = null) {
-      const v = getCurrentVehicle();
-      if (!v) return;
-      document.getElementById('maintenanceForm').reset();
-      currentUploadedPhotoBase64 = null;
-      document.getElementById('photoPreviewContainer').classList.add('hidden');
-      document.getElementById('photoUploadLabel').textContent = 'Allega foto ricevuta';
-      document.getElementById('reminderFields').classList.add('hidden');
-
-      if (editId) {
-        const m = appState.maintenances.find(item => item.id === editId);
-        if (!m) return;
-        document.getElementById('maintenanceModalTitle').textContent = 'Modifica Intervento';
-        document.getElementById('mId').value = m.id;
-        document.getElementById('mTitle').value = m.title;
-        document.getElementById('mCategory').value = m.category;
-        document.getElementById('mDate').value = m.date;
-        document.getElementById('mKm').value = m.km;
-        document.getElementById('mCost').value = m.cost || '';
-        document.getElementById('mNotes').value = m.notes || '';
-        if (m.photo) {
-          currentUploadedPhotoBase64 = m.photo;
-          document.getElementById('mPhotoPreview').src = m.photo;
-          document.getElementById('photoPreviewContainer').classList.remove('hidden');
-          document.getElementById('photoUploadLabel').textContent = 'Sostituisci foto';
-        }
-      } else {
-        document.getElementById('maintenanceModalTitle').textContent = 'Registra Intervento';
-        document.getElementById('mId').value = '';
-        document.getElementById('mDate').value = new Date().toISOString().split('T')[0];
-        document.getElementById('mKm').value = v.km;
-      }
-
-      openModal('maintenanceModal');
-    }
-
-    function fillMaintenancePreset(title, category) {
-      document.getElementById('mTitle').value = title;
-      document.getElementById('mCategory').value = category;
-    }
-
-    function toggleReminderFields() {
-      const box = document.getElementById('reminderFields');
-      box.classList.toggle('hidden', !document.getElementById('mSetReminder').checked);
-    }
-
-    function handlePhotoUpload(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        const img = new Image();
-        img.onload = function() {
-          const canvas = document.createElement('canvas');
-          const MAX_DIM = 850;
-          let w = img.width;
-          let h = img.height;
-          if (w > h && w > MAX_DIM) { h *= MAX_DIM / w; w = MAX_DIM; }
-          else if (h > MAX_DIM) { w *= MAX_DIM / h; h = MAX_DIM; }
-          canvas.width = w;
-          canvas.height = h;
-          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-
-          currentUploadedPhotoBase64 = canvas.toDataURL('image/jpeg', 0.65);
-          document.getElementById('mPhotoPreview').src = currentUploadedPhotoBase64;
-          document.getElementById('photoPreviewContainer').classList.remove('hidden');
-          document.getElementById('photoUploadLabel').textContent = 'Foto pronta';
-        };
-        img.src = e.target.result;
-      };
-      reader.readAsDataURL(file);
-    }
-
-    function removeUploadedPhoto() {
-      currentUploadedPhotoBase64 = null;
-      document.getElementById('mPhotoInput').value = '';
-      document.getElementById('photoPreviewContainer').classList.add('hidden');
-      document.getElementById('photoUploadLabel').textContent = 'Allega foto ricevuta';
-    }
-
-    function viewPhoto(src) {
-      document.getElementById('lightboxImg').src = src;
-      openModal('photoViewerModal');
-    }
-
-    function saveMaintenance(event) {
-      event.preventDefault();
-      const v = getCurrentVehicle();
-      if (!v) return;
-
-      const id = document.getElementById('mId').value;
-      const title = document.getElementById('mTitle').value.trim();
-      const category = document.getElementById('mCategory').value;
-      const date = document.getElementById('mDate').value;
-      const km = parseInt(document.getElementById('mKm').value, 10) || 0;
-      const cost = document.getElementById('mCost').value ? parseFloat(document.getElementById('mCost').value) : null;
-      const notes = document.getElementById('mNotes').value.trim();
-
-      if (id) {
-        const idx = appState.maintenances.findIndex(m => m.id === id);
-        if (idx !== -1) {
-          appState.maintenances[idx] = {
-            ...appState.maintenances[idx],
-            title, category, date, km, cost, notes,
-            photo: currentUploadedPhotoBase64
-          };
-        }
-      } else {
-        appState.maintenances.push({
-          id: 'mnt_' + Date.now(),
-          vehicleId: v.id,
-          title, category, date, km, cost, notes,
-          photo: currentUploadedPhotoBase64
-        });
-      }
-
-      if (km > v.km) v.km = km;
-
-      if (document.getElementById('mSetReminder').checked) {
-        const remKm = parseInt(document.getElementById('mReminderKm').value, 10) || 0;
-        const remMonths = parseInt(document.getElementById('mReminderMonths').value, 10) || 0;
-        if (remKm > 0 || remMonths > 0) {
-          let dueDate = null;
-          if (remMonths > 0) {
-            const d = new Date(date);
-            d.setMonth(d.getMonth() + remMonths);
-            dueDate = d.toISOString().split('T')[0];
-          }
-          appState.deadlines.push({
-            id: 'dl_' + Date.now(),
-            vehicleId: v.id,
-            title: `Prossimo: ${title}`,
-            type: 'manutenzione',
-            dueDate,
-            dueKm: remKm > 0 ? km + remKm : null,
-            meta: `Da intervento del ${formatDateIT(date)}`
-          });
-        }
-      }
-
-      saveDataToStorage();
-      closeModal('maintenanceModal');
-      renderVehicleDetail();
-      showToast('Intervento salvato!');
-    }
-
-    function confirmDeleteMaintenance(id) {
-      openConfirmDialog(
-        'Eliminare intervento?',
-        'Questa voce verrà rimossa definitivamente dallo storico.',
-        () => {
-          appState.maintenances = appState.maintenances.filter(m => m.id !== id);
-          saveDataToStorage();
-          renderDetailMaintenances();
-          showToast('Intervento eliminato.');
-        }
-      );
-    }
-
-    // ---------------------------------------------------------
-    // 9. BACKUP JSON & UTILITÀ
-    // ---------------------------------------------------------
-    function updateStorageMeter() {
-      const dataStr = localStorage.getItem(STORAGE_KEY) || '';
-      const bytes = new Blob([dataStr]).size;
-      const kb = (bytes / 1024).toFixed(1);
-      const percent = Math.min(100, Math.max(2, Math.round((bytes / (5 * 1024 * 1024)) * 100)));
-      document.getElementById('storageUsageText').textContent = `${kb} KB / 5.0 MB`;
-      document.getElementById('storageUsageBar').style.width = `${percent}%`;
-    }
-
-    function exportBackupJSON() {
-      const dateStr = new Date().toISOString().split('T')[0];
-      const blob = new Blob([JSON.stringify(appState, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `libretto-auto-backup-${dateStr}.json`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      showToast('Backup scaricato!');
-    }
-
-    function importBackupJSON(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        try {
-          const imported = JSON.parse(e.target.result);
-          if (!imported || !Array.isArray(imported.vehicles)) {
-            showToast('File non valido.');
-            return;
-          }
-          appState = {
-            vehicles: imported.vehicles || [],
-            deadlines: imported.deadlines || [],
-            maintenances: imported.maintenances || []
-          };
-          saveDataToStorage();
-          closeModal('backupModal');
-          backToGarage();
-          showToast('Backup ripristinato!');
-        } catch (err) {
-          showToast('Errore lettura file.');
-        }
-        event.target.value = '';
-      };
-      reader.readAsText(file);
-    }
-
-    function openConfirmDialog(title, message, onConfirm) {
-      document.getElementById('confirmTitle').textContent = title;
-      document.getElementById('confirmMessage').textContent = message;
-      document.getElementById('confirmOkBtn').onclick = () => {
-        closeModal('confirmDialogModal');
-        onConfirm();
-      };
-      openModal('confirmDialogModal');
-    }
-
-    let toastTimer;
-    function showToast(msg) {
-      const toast = document.getElementById('toast');
-      document.getElementById('toastMessage').textContent = msg;
-      toast.classList.remove('opacity-0', '-translate-y-2');
-      toast.classList.add('opacity-100', 'translate-y-0');
-      clearTimeout(toastTimer);
-      toastTimer = setTimeout(() => {
-        toast.classList.remove('opacity-100', 'translate-y-0');
-        toast.classList.add('opacity-0', '-translate-y-2');
-      }, 2500);
-    }
-
-    function formatDateIT(iso) {
-      if (!iso) return '';
-      const [y, m, d] = iso.split('-');
-      return `${d}/${m}/${y}`;
-    }
-
-    function escapeHtml(str) {
-      if (!str) return '';
-      return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
-    }
-
-    window.onload = initApp;
-  </script>
+loadState();
+render();
+</script>
 </body>
 </html>
