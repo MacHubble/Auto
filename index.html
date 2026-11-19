@@ -4,24 +4,22 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="Libretto Auto" />
-  <meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: dark)" />
-  <meta name="theme-color" content="#f8fafc" media="(prefers-color-scheme: light)" />
-  <title>Libretto Auto — Manutenzione & Scadenze</title>
+  <meta name="theme-color" content="#F5F6F8" />
+  <title>Libretto Auto — Il Mio Garage</title>
 
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
-  <!-- Google Font: Inter -->
+  <!-- Google Fonts: Inter & JetBrains Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@600;700&display=swap" rel="stylesheet" />
 
   <script>
     tailwind.config = {
-      darkMode: 'class',
       theme: {
         extend: {
           fontFamily: {
@@ -29,16 +27,10 @@
             mono: ['JetBrains Mono', 'monospace'],
           },
           colors: {
-            ios: {
-              blue: '#007AFF',
-              green: '#34C759',
-              orange: '#FF9500',
-              red: '#FF3B30',
-              bgLight: '#F2F2F7',
-              cardLight: '#FFFFFF',
-              bgDark: '#000000',
-              cardDark: '#1C1C1E',
-              elevatedDark: '#2C2C2E',
+            garage: {
+              bg: '#F5F6F8',
+              card: '#FFFFFF',
+              accent: '#007AFF',
             }
           }
         }
@@ -47,24 +39,20 @@
   </script>
 
   <style>
-    /* Safe area iOS & comportamenti touch nativi */
     :root {
       --sat: env(safe-area-inset-top, 0px);
       --sab: env(safe-area-inset-bottom, 0px);
     }
 
     body {
+      background-color: #F5F6F8;
+      color: #0F172A;
       padding-top: var(--sat);
-      padding-bottom: calc(84px + var(--sab));
+      padding-bottom: calc(28px + var(--sab));
       -webkit-tap-highlight-color: transparent;
       overscroll-behavior-y: none;
     }
 
-    .bottom-nav {
-      padding-bottom: max(10px, var(--sab));
-    }
-
-    /* Nascondi scrollbar su filtri orizzontali */
     .no-scrollbar::-webkit-scrollbar {
       display: none;
     }
@@ -73,457 +61,337 @@
       scrollbar-width: none;
     }
 
-    /* Effetto pressione stile iOS */
+    .ios-tap {
+      transition: transform 0.16s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.16s ease;
+    }
     .ios-tap:active {
-      transform: scale(0.97);
-      opacity: 0.85;
+      transform: scale(0.975);
+      opacity: 0.88;
     }
 
-    /* Animazione modali dal basso (Sheet iOS) */
     @keyframes slideUp {
-      from { transform: translateY(100%); opacity: 0.5; }
+      from { transform: translateY(100%); opacity: 0.4; }
       to { transform: translateY(0); opacity: 1; }
     }
     .animate-sheet {
       animation: slideUp 0.28s cubic-bezier(0.22, 1, 0.36, 1) forwards;
     }
+
+    @keyframes fadeInScale {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .view-transition {
+      animation: fadeInScale 0.24s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
   </style>
 </head>
 
-<body class="bg-ios-bgLight text-slate-900 dark:bg-ios-bgDark dark:text-slate-100 transition-colors duration-200 select-none">
+<body class="select-none">
 
-  <!-- HEADER FISSO SUPERIORE CON SELETTORE VEICOLO -->
-  <header class="sticky top-0 z-30 backdrop-blur-xl bg-white/80 dark:bg-ios-cardDark/85 border-b border-slate-200/70 dark:border-zinc-800 px-4 py-3">
-    <div class="max-w-xl mx-auto flex items-center justify-between gap-2">
-      <div class="flex items-center gap-2.5 min-w-0">
-        <div class="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-sm shrink-0">
-          <i data-lucide="car-front" class="w-5 h-5"></i>
-        </div>
-        <div class="min-w-0">
-          <div class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-400 leading-none mb-1">
-            Libretto Auto
-          </div>
-          <!-- Selettore rapido veicolo -->
-          <div class="relative flex items-center">
-            <select id="vehicleSelector" onchange="switchVehicle(this.value)"
-              class="appearance-none bg-transparent font-bold text-base text-slate-900 dark:text-white pr-6 truncate focus:outline-none cursor-pointer">
-            </select>
-            <i data-lucide="chevron-down" class="w-4 h-4 text-slate-500 pointer-events-none -ml-5"></i>
-          </div>
-        </div>
-      </div>
+  <!-- ========================================================= -->
+  <!-- VISTA 1: HOME / IL MIO GARAGE (SCHERMATA INIZIALE PULITA) -->
+  <!-- ========================================================= -->
+  <div id="view-garage" class="min-h-screen flex flex-col">
 
-      <div class="flex items-center gap-2 shrink-0">
-        <!-- Pulsante Guida Installazione iPhone -->
-        <button onclick="openModal('installGuideModal')" title="Come installare su iPhone"
-          class="p-2.5 rounded-full bg-slate-100 dark:bg-ios-elevatedDark text-slate-700 dark:text-zinc-200 ios-tap">
-          <i data-lucide="smartphone" class="w-4 h-4"></i>
-        </button>
-        <!-- Toggle Tema Chiaro / Scuro -->
-        <button onclick="toggleTheme()" id="themeToggleBtn" title="Cambia tema"
-          class="p-2.5 rounded-full bg-slate-100 dark:bg-ios-elevatedDark text-slate-700 dark:text-zinc-200 ios-tap">
-          <i data-lucide="moon" class="w-4 h-4 dark:hidden"></i>
-          <i data-lucide="sun" class="w-4 h-4 hidden dark:block text-amber-400"></i>
-        </button>
-      </div>
-    </div>
-  </header>
-
-  <!-- CONTENUTO PRINCIPALE -->
-  <main class="max-w-xl mx-auto px-4 pt-4 space-y-5">
-
-    <!-- BANNER DATI DEMO (Visibile solo se sono presenti dati di esempio) -->
-    <div id="demoBanner" class="hidden bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 rounded-2xl p-3.5 flex items-center justify-between gap-3">
-      <div class="flex items-start gap-2.5">
-        <i data-lucide="sparkles" class="w-5 h-5 text-amber-500 shrink-0 mt-0.5"></i>
-        <div class="text-xs text-amber-900 dark:text-amber-200 leading-relaxed">
-          <span class="font-semibold block">Modalità Demo attiva</span>
-          Stai visualizzando un'auto di esempio. Svuota i dati quando sei pronto a inserire la tua.
-        </div>
-      </div>
-      <button onclick="confirmClearDemo()"
-        class="shrink-0 px-3 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold shadow-sm ios-tap">
-        Inizia da zero
-      </button>
-    </div>
-
-    <!-- ========================================== -->
-    <!-- TAB 1: PANORAMICA (DASHBOARD)              -->
-    <!-- ========================================== -->
-    <section id="tab-dashboard" class="space-y-5">
-
-      <!-- Card Veicolo Attuale -->
-      <div id="activeVehicleCard" class="bg-ios-cardLight dark:bg-ios-cardDark rounded-3xl p-5 shadow-sm border border-slate-200/60 dark:border-zinc-800">
-        <!-- Popolato via JS -->
-      </div>
-
-      <!-- Intestazione Scadenze & Controlli -->
-      <div class="flex items-center justify-between pt-1">
+    <!-- Header Minimale Garage -->
+    <header class="sticky top-0 z-30 bg-[#F5F6F8]/85 backdrop-blur-xl px-5 pt-4 pb-3 border-b border-slate-200/60">
+      <div class="max-w-xl mx-auto flex items-center justify-between">
         <div>
-          <h2 class="text-lg font-bold tracking-tight">Scadenze & Controlli</h2>
-          <p class="text-xs text-slate-500 dark:text-zinc-400">Tocca una voce per rinnovarla o modificarla</p>
+          <span class="text-[11px] font-bold uppercase tracking-widest text-slate-400">Libretto Digitale</span>
+          <h1 class="text-2xl font-extrabold tracking-tight text-slate-900">Il mio Garage</h1>
         </div>
-        <button onclick="openDeadlineModal()"
-          class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 text-xs font-semibold ios-tap">
-          <i data-lucide="plus" class="w-4 h-4"></i> Scadenza
-        </button>
-      </div>
 
-      <!-- Lista Scadenze a Semaforo -->
-      <div id="deadlinesList" class="space-y-3">
-        <!-- Popolato via JS -->
-      </div>
-
-      <!-- Ultimi Interventi Eseguiti (Anteprima rapida) -->
-      <div class="pt-1">
-        <div class="flex items-center justify-between mb-3">
-          <h2 class="text-lg font-bold tracking-tight">Ultimi Interventi</h2>
-          <button onclick="switchTab('maintenance')" class="text-xs font-semibold text-blue-600 dark:text-blue-400">
-            Vedi tutti →
+        <div class="flex items-center gap-2">
+          <button onclick="openModal('backupModal')" title="Backup & Impostazioni"
+            class="p-2.5 rounded-full bg-white text-slate-600 border border-slate-200/80 shadow-xs ios-tap">
+            <i data-lucide="settings" class="w-4 h-4"></i>
+          </button>
+          <button onclick="openVehicleModal()" id="headerAddCarBtn"
+            class="px-3.5 py-2 rounded-full bg-[#007AFF] hover:bg-blue-600 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm ios-tap">
+            <i data-lucide="plus" class="w-4 h-4"></i> Aggiungi
           </button>
         </div>
-        <div id="recentMaintenanceList" class="space-y-2.5">
-          <!-- Popolato via JS -->
-        </div>
       </div>
+    </header>
 
-    </section>
+    <!-- Contenuto Garage -->
+    <main class="flex-1 max-w-xl w-full mx-auto px-5 pt-5 flex flex-col">
 
-    <!-- ========================================== -->
-    <!-- TAB 2: MANUTENZIONI (STORICO & INTERVENTI) -->
-    <!-- ========================================== -->
-    <section id="tab-maintenance" class="hidden space-y-4">
-
-      <!-- Riepilogo Costi Manutenzione -->
-      <div class="grid grid-cols-2 gap-3">
-        <div class="bg-ios-cardLight dark:bg-ios-cardDark rounded-2xl p-4 border border-slate-200/60 dark:border-zinc-800 shadow-sm">
-          <div class="text-xs font-medium text-slate-500 dark:text-zinc-400 flex items-center gap-1.5">
-            <i data-lucide="calendar" class="w-3.5 h-3.5 text-blue-500"></i>
-            Spese <span id="currentYearLabel">2026</span>
-          </div>
-          <div id="yearExpensesTotal" class="text-xl font-extrabold mt-1 text-slate-900 dark:text-white">€ 0</div>
+      <!-- STATO VUOTO (Visibile all'avvio se non ci sono auto) -->
+      <div id="garageEmptyState" class="hidden flex-1 flex flex-col items-center justify-center text-center py-12 px-4 view-transition">
+        <div class="w-44 h-28 mb-4 flex items-center justify-center opacity-90" id="emptyStateCarPreview">
+          <!-- SVG auto stilizzata minimal inserita via JS -->
         </div>
-        <div class="bg-ios-cardLight dark:bg-ios-cardDark rounded-2xl p-4 border border-slate-200/60 dark:border-zinc-800 shadow-sm">
-          <div class="text-xs font-medium text-slate-500 dark:text-zinc-400 flex items-center gap-1.5">
-            <i data-lucide="history" class="w-3.5 h-3.5 text-emerald-500"></i>
-            Totale Storico
-          </div>
-          <div id="allTimeExpensesTotal" class="text-xl font-extrabold mt-1 text-slate-900 dark:text-white">€ 0</div>
-        </div>
-      </div>
-
-      <!-- Barra Ricerca + Bottone Nuovo Intervento -->
-      <div class="flex items-center gap-2">
-        <div class="relative flex-1">
-          <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
-          <input type="text" id="maintenanceSearch" oninput="renderMaintenanceList()"
-            placeholder="Cerca tagliando, gomme, officina..."
-            class="w-full pl-9 pr-4 py-2.5 rounded-xl bg-ios-cardLight dark:bg-ios-cardDark border border-slate-200/80 dark:border-zinc-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-        </div>
-        <button onclick="openMaintenanceModal()"
-          class="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm flex items-center gap-1.5 shadow-sm shrink-0 ios-tap">
-          <i data-lucide="plus" class="w-4 h-4"></i> Nuovo
+        <h2 class="text-xl font-extrabold text-slate-900 tracking-tight">Il tuo garage è vuoto</h2>
+        <p class="text-sm text-slate-500 max-w-xs mt-1.5 leading-relaxed">
+          Aggiungi la tua auto scegliendo modello e colore per tenere sotto controllo tagliandi, revisione, bollo e assicurazione.
+        </p>
+        <button onclick="openVehicleModal()"
+          class="mt-6 px-6 py-3.5 rounded-2xl bg-[#007AFF] hover:bg-blue-600 text-white font-bold text-sm flex items-center gap-2 shadow-md shadow-blue-500/20 ios-tap">
+          <i data-lucide="plus-circle" class="w-5 h-5"></i>
+          Aggiungi la tua prima auto
         </button>
       </div>
 
-      <!-- Filtri Categoria Orizzontali -->
-      <div id="categoryFilters" class="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
-        <!-- Popolato via JS -->
+      <!-- GRIGLIA / LISTA VEICOLI SALVATI -->
+      <div id="garageVehiclesList" class="space-y-4 view-transition">
+        <!-- Popolato dinamicamente via JS -->
       </div>
 
-      <!-- Lista Cronologica Manutenzioni -->
-      <div id="maintenanceFullList" class="space-y-3">
-        <!-- Popolato via JS -->
-      </div>
-
-    </section>
-
-    <!-- ========================================== -->
-    <!-- TAB 3: VEICOLI & BACKUP                    -->
-    <!-- ========================================== -->
-    <section id="tab-garage" class="hidden space-y-5">
-
-      <!-- Sezione Garage Veicoli -->
-      <div>
-        <div class="flex items-center justify-between mb-3">
-          <div>
-            <h2 class="text-lg font-bold tracking-tight">I Tuoi Veicoli</h2>
-            <p class="text-xs text-slate-500 dark:text-zinc-400">Gestisci auto e moto salvate sul telefono</p>
-          </div>
-          <button onclick="openVehicleModal()"
-            class="px-3.5 py-2 rounded-xl bg-blue-600 text-white text-xs font-semibold flex items-center gap-1.5 shadow-sm ios-tap">
-            <i data-lucide="plus" class="w-4 h-4"></i> Aggiungi Veicolo
-          </button>
-        </div>
-
-        <div id="vehiclesGarageList" class="space-y-3">
-          <!-- Popolato via JS -->
-        </div>
-      </div>
-
-      <!-- Sezione Sicurezza Dati & Backup JSON -->
-      <div class="bg-ios-cardLight dark:bg-ios-cardDark rounded-3xl p-5 border border-slate-200/60 dark:border-zinc-800 shadow-sm space-y-4">
-        <div class="flex items-start gap-3">
-          <div class="w-10 h-10 rounded-2xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
-            <i data-lucide="shield-check" class="w-5 h-5"></i>
-          </div>
-          <div>
-            <h3 class="font-bold text-base">Privacy & Backup Locale</h3>
-            <p class="text-xs text-slate-500 dark:text-zinc-400 leading-relaxed mt-0.5">
-              Tutti i dati, le scadenze e le foto delle ricevute sono salvati <strong>esclusivamente nella memoria del tuo dispositivo</strong>. Nessun dato viene inviato a server esterni.
-            </p>
-          </div>
-        </div>
-
-        <!-- Barra Spazio Utilizzato LocalStorage -->
-        <div class="bg-slate-50 dark:bg-ios-elevatedDark/60 rounded-2xl p-3.5 space-y-2">
-          <div class="flex justify-between items-center text-xs">
-            <span class="font-medium text-slate-600 dark:text-zinc-300">Memoria locale occupata</span>
-            <span id="storageUsageText" class="font-mono font-bold text-slate-900 dark:text-white">0 KB / 5 MB</span>
-          </div>
-          <div class="w-full h-2 bg-slate-200 dark:bg-zinc-700 rounded-full overflow-hidden">
-            <div id="storageUsageBar" class="h-full bg-blue-600 rounded-full transition-all duration-300" style="width: 2%"></div>
-          </div>
-          <p class="text-[11px] text-slate-400 dark:text-zinc-400">
-            Suggerimento: esporta periodicamente un backup JSON per non perdere lo storico se cambi telefono o svuoti i dati di Safari.
-          </p>
-        </div>
-
-        <!-- Pulsanti Export / Import -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
-          <button onclick="exportBackupJSON()"
-            class="w-full py-3 px-4 rounded-2xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-semibold text-sm flex items-center justify-center gap-2 shadow-sm ios-tap">
-            <i data-lucide="download" class="w-4 h-4"></i> Esporta Backup (.json)
-          </button>
-
-          <label class="w-full py-3 px-4 rounded-2xl bg-slate-100 dark:bg-ios-elevatedDark text-slate-800 dark:text-zinc-100 font-semibold text-sm flex items-center justify-center gap-2 cursor-pointer ios-tap">
-            <i data-lucide="upload" class="w-4 h-4"></i> Importa Backup (.json)
-            <input type="file" id="importJsonInput" accept=".json,application/json" onchange="importBackupJSON(event)" class="hidden" />
-          </label>
-        </div>
-      </div>
-
-      <!-- Box Guida Installazione iPhone -->
-      <div class="bg-blue-50/80 dark:bg-blue-950/30 border border-blue-200/70 dark:border-blue-900/50 rounded-3xl p-5 space-y-2.5">
-        <div class="flex items-center gap-2 text-blue-700 dark:text-blue-400 font-bold text-sm">
-          <i data-lucide="smartphone" class="w-4 h-4"></i>
-          Usala come App nativa su iPhone
-        </div>
-        <ol class="text-xs text-slate-600 dark:text-zinc-300 space-y-1.5 list-decimal list-inside leading-relaxed">
-          <li>Apri questa pagina in <strong>Safari</strong> sul tuo iPhone.</li>
-          <li>Tocca l'icona <strong>Condividi</strong> (quadrato con freccia verso l'alto in basso).</li>
-          <li>Scorri e tocca <strong>"Aggiungi alla schermata Home"</strong>.</li>
-        </ol>
-      </div>
-
-      <!-- Reset Totale -->
-      <div class="pt-2 pb-4 text-center">
-        <button onclick="confirmFactoryReset()" class="text-xs font-medium text-red-500 hover:text-red-600 underline">
-          Cancella tutti i dati e ripristina app
-        </button>
-      </div>
-
-    </section>
-
-  </main>
-
-  <!-- ========================================== -->
-  <!-- TAB BAR INFERIORE FISSA STILE iOS          -->
-  <!-- ========================================== -->
-  <nav class="bottom-nav fixed bottom-0 inset-x-0 z-30 backdrop-blur-xl bg-white/85 dark:bg-ios-cardDark/90 border-t border-slate-200/80 dark:border-zinc-800 px-2 pt-2">
-    <div class="max-w-xl mx-auto grid grid-cols-3 gap-1">
-      <button onclick="switchTab('dashboard')" id="nav-dashboard"
-        class="nav-item flex flex-col items-center justify-center py-1 rounded-xl text-blue-600 dark:text-blue-400 transition-colors">
-        <i data-lucide="layout-dashboard" class="w-5 h-5 mb-0.5"></i>
-        <span class="text-[11px] font-semibold">Panoramica</span>
-      </button>
-
-      <button onclick="switchTab('maintenance')" id="nav-maintenance"
-        class="nav-item flex flex-col items-center justify-center py-1 rounded-xl text-slate-400 dark:text-zinc-500 transition-colors">
-        <i data-lucide="wrench" class="w-5 h-5 mb-0.5"></i>
-        <span class="text-[11px] font-semibold">Manutenzioni</span>
-      </button>
-
-      <button onclick="switchTab('garage')" id="nav-garage"
-        class="nav-item flex flex-col items-center justify-center py-1 rounded-xl text-slate-400 dark:text-zinc-500 transition-colors">
-        <i data-lucide="car" class="w-5 h-5 mb-0.5"></i>
-        <span class="text-[11px] font-semibold">Veicoli & Backup</span>
-      </button>
-    </div>
-  </nav>
-
-  <!-- ========================================== -->
-  <!-- MODAL 1: AGGIORNAMENTO RAPIDO KM           -->
-  <!-- ========================================== -->
-  <div id="updateKmModal" class="fixed inset-0 z-50 hidden bg-black/50 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
-    <div class="animate-sheet bg-white dark:bg-ios-cardDark w-full max-w-md rounded-t-3xl sm:rounded-3xl p-6 space-y-4 shadow-2xl border-t sm:border border-slate-200 dark:border-zinc-800">
-      <div class="flex items-center justify-between">
-        <h3 class="text-lg font-bold">Aggiorna Chilometraggio</h3>
-        <button onclick="closeModal('updateKmModal')" class="p-2 rounded-full bg-slate-100 dark:bg-ios-elevatedDark text-slate-500">
-          <i data-lucide="x" class="w-4 h-4"></i>
-        </button>
-      </div>
-      <p class="text-xs text-slate-500 dark:text-zinc-400">
-        Aggiornando i km l'app ricalcolerà automaticamente le scadenze basate sulla percorrenza (tagliandi, gomme, freni).
-      </p>
-      <div>
-        <label class="block text-xs font-semibold text-slate-500 dark:text-zinc-400 mb-1.5">Chilometri attuali</label>
-        <div class="relative">
-          <input type="number" id="quickKmInput" inputmode="numeric"
-            class="w-full px-4 py-3.5 rounded-2xl bg-slate-100 dark:bg-ios-elevatedDark text-2xl font-mono font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
-          <span class="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">km</span>
-        </div>
-        <!-- Pulsanti rapidi incremento km -->
-        <div class="flex gap-2 mt-2.5">
-          <button type="button" onclick="addQuickKm(100)" class="flex-1 py-1.5 rounded-xl bg-slate-100 dark:bg-ios-elevatedDark text-xs font-semibold text-slate-700 dark:text-zinc-300 ios-tap">+100 km</button>
-          <button type="button" onclick="addQuickKm(500)" class="flex-1 py-1.5 rounded-xl bg-slate-100 dark:bg-ios-elevatedDark text-xs font-semibold text-slate-700 dark:text-zinc-300 ios-tap">+500 km</button>
-          <button type="button" onclick="addQuickKm(1000)" class="flex-1 py-1.5 rounded-xl bg-slate-100 dark:bg-ios-elevatedDark text-xs font-semibold text-slate-700 dark:text-zinc-300 ios-tap">+1.000 km</button>
-        </div>
-      </div>
-      <button onclick="saveQuickKm()" class="w-full py-3.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm shadow-md ios-tap">
-        Salva Chilometraggio
-      </button>
-    </div>
+    </main>
   </div>
 
-  <!-- ========================================== -->
-  <!-- MODAL 2: NUOVO / MODIFICA INTERVENTO       -->
-  <!-- ========================================== -->
-  <div id="maintenanceModal" class="fixed inset-0 z-50 hidden bg-black/50 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto">
-    <div class="animate-sheet bg-white dark:bg-ios-cardDark w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-6 space-y-4 shadow-2xl border-t sm:border border-slate-200 dark:border-zinc-800 max-h-[92vh] overflow-y-auto">
+  <!-- ========================================================= -->
+  <!-- VISTA 2: DETTAGLIO VEICOLO (APERTA CLICCANDO SULL'AUTO)    -->
+  <!-- ========================================================= -->
+  <div id="view-detail" class="hidden min-h-screen flex flex-col view-transition">
+
+    <!-- Top Navigation Dettaglio -->
+    <header class="sticky top-0 z-30 bg-[#F5F6F8]/85 backdrop-blur-xl px-4 py-3 border-b border-slate-200/60">
+      <div class="max-w-xl mx-auto flex items-center justify-between">
+        <button onclick="backToGarage()"
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-slate-200/80 text-slate-700 text-xs font-bold shadow-2xs ios-tap">
+          <i data-lucide="chevron-left" class="w-4 h-4"></i> Il mio Garage
+        </button>
+
+        <button onclick="editCurrentVehicle()"
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-slate-200/80 text-slate-700 text-xs font-semibold shadow-2xs ios-tap">
+          <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5"></i> Modifica Auto
+        </button>
+      </div>
+    </header>
+
+    <main class="max-w-xl w-full mx-auto px-4 pt-4 space-y-5">
+
+      <!-- Hero Card Veicolo con Avatar Grande -->
+      <section id="detailHeroCard" class="bg-white rounded-3xl p-5 shadow-sm border border-slate-200/60">
+        <!-- Popolato via JS -->
+      </section>
+
+      <!-- Segmented Control stile iOS (Riepilogo & Scadenze / Manutenzioni) -->
+      <div class="bg-slate-200/80 p-1 rounded-2xl grid grid-cols-2 gap-1">
+        <button onclick="switchDetailSubTab('overview')" id="subtab-btn-overview"
+          class="py-2 rounded-xl text-xs font-bold bg-white text-slate-900 shadow-xs transition-all">
+          Scadenze & Controlli
+        </button>
+        <button onclick="switchDetailSubTab('maintenance')" id="subtab-btn-maintenance"
+          class="py-2 rounded-xl text-xs font-bold text-slate-500 transition-all">
+          Storico Manutenzioni
+        </button>
+      </div>
+
+      <!-- SOTTO-SEZIONE A: SCADENZE & CONTROLLI -->
+      <section id="detail-subtab-overview" class="space-y-3.5">
+        <div class="flex items-center justify-between px-1">
+          <div>
+            <h3 class="text-base font-extrabold text-slate-900">Scadenze & Controlli</h3>
+            <p class="text-[11px] text-slate-500">Tocca una scadenza per rinnovarla o modificarla</p>
+          </div>
+          <button onclick="openDeadlineModal()"
+            class="px-3 py-1.5 rounded-xl bg-blue-50 text-[#007AFF] text-xs font-bold flex items-center gap-1 ios-tap">
+            <i data-lucide="plus" class="w-3.5 h-3.5"></i> Scadenza
+          </button>
+        </div>
+
+        <div id="detailDeadlinesList" class="space-y-3">
+          <!-- Popolato via JS -->
+        </div>
+      </section>
+
+      <!-- SOTTO-SEZIONE B: MANUTENZIONI -->
+      <section id="detail-subtab-maintenance" class="hidden space-y-4">
+        <!-- Riepilogo Spese -->
+        <div class="grid grid-cols-2 gap-3">
+          <div class="bg-white rounded-2xl p-4 border border-slate-200/60 shadow-2xs">
+            <div class="text-[11px] font-semibold text-slate-400 flex items-center gap-1.5">
+              <i data-lucide="calendar" class="w-3.5 h-3.5 text-[#007AFF]"></i>
+              Spese <span id="detailYearLabel">2026</span>
+            </div>
+            <div id="detailYearTotal" class="text-xl font-extrabold text-slate-900 mt-1">€ 0</div>
+          </div>
+          <div class="bg-white rounded-2xl p-4 border border-slate-200/60 shadow-2xs">
+            <div class="text-[11px] font-semibold text-slate-400 flex items-center gap-1.5">
+              <i data-lucide="wallet" class="w-3.5 h-3.5 text-emerald-500"></i>
+              Totale Storico
+            </div>
+            <div id="detailAllTimeTotal" class="text-xl font-extrabold text-slate-900 mt-1">€ 0</div>
+          </div>
+        </div>
+
+        <!-- Ricerca & Nuovo Intervento -->
+        <div class="flex items-center gap-2">
+          <div class="relative flex-1">
+            <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+            <input type="text" id="maintenanceSearchInput" oninput="renderDetailMaintenances()"
+              placeholder="Cerca tagliando, gomme, officina..."
+              class="w-full pl-9 pr-3 py-2.5 rounded-xl bg-white border border-slate-200/80 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#007AFF]" />
+          </div>
+          <button onclick="openMaintenanceModal()"
+            class="px-4 py-2.5 rounded-xl bg-[#007AFF] hover:bg-blue-600 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs shrink-0 ios-tap">
+            <i data-lucide="plus" class="w-4 h-4"></i> Intervento
+          </button>
+        </div>
+
+        <!-- Filtri Categoria -->
+        <div id="detailCategoryFilters" class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
+          <!-- Popolato via JS -->
+        </div>
+
+        <!-- Lista Interventi -->
+        <div id="detailMaintenanceList" class="space-y-3">
+          <!-- Popolato via JS -->
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- MODAL 1: AGGIUNGI / MODIFICA AUTO (CON CONFIGURATORE SVG) -->
+  <!-- ========================================================= -->
+  <div id="vehicleModal" class="fixed inset-0 z-50 hidden bg-black/45 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="animate-sheet bg-white w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-6 space-y-4 shadow-2xl max-h-[92vh] overflow-y-auto">
       <div class="flex items-center justify-between">
-        <h3 id="maintenanceModalTitle" class="text-lg font-bold">Registra Intervento</h3>
-        <button onclick="closeModal('maintenanceModal')" class="p-2 rounded-full bg-slate-100 dark:bg-ios-elevatedDark text-slate-500">
+        <h3 id="vehicleModalTitle" class="text-lg font-extrabold text-slate-900">Nuova Auto</h3>
+        <button onclick="closeModal('vehicleModal')" class="p-2 rounded-full bg-slate-100 text-slate-500 ios-tap">
           <i data-lucide="x" class="w-4 h-4"></i>
         </button>
       </div>
 
-      <form id="maintenanceForm" onsubmit="saveMaintenance(event)" class="space-y-4">
-        <input type="hidden" id="mId" />
+      <!-- ANTEPRIMA LIVE DELL'AVATAR AUTO -->
+      <div class="bg-[#F5F6F8] rounded-2xl p-4 flex flex-col items-center justify-center border border-slate-200/70">
+        <div id="liveCarAvatarPreview" class="w-48 h-24 flex items-center justify-center transition-all duration-200">
+          <!-- Renderizzato dinamicamente al cambio di modello o colore -->
+        </div>
+        <span class="text-[11px] font-medium text-slate-400 mt-1">Anteprima avatar nel tuo garage</span>
+      </div>
 
-        <!-- Suggerimenti Rapidi -->
+      <form id="vehicleForm" onsubmit="saveVehicle(event)" class="space-y-4">
+        <input type="hidden" id="vId" />
+
+        <!-- Selettore Carrozzeria -->
         <div>
-          <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Suggerimenti rapidi</label>
-          <div class="flex flex-wrap gap-1.5">
-            <button type="button" onclick="fillMaintenancePreset('Tagliando completo', 'Tagliando/Olio')" class="px-2.5 py-1 rounded-lg bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 text-xs font-medium ios-tap">Tagliando completo</button>
-            <button type="button" onclick="fillMaintenancePreset('Cambio olio e filtro', 'Tagliando/Olio')" class="px-2.5 py-1 rounded-lg bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 text-xs font-medium ios-tap">Cambio olio e filtro</button>
-            <button type="button" onclick="fillMaintenancePreset('Sostituzione pastiglie freni', 'Freni')" class="px-2.5 py-1 rounded-lg bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 text-xs font-medium ios-tap">Pastiglie freni</button>
-            <button type="button" onclick="fillMaintenancePreset('Cambio gomme stagionale', 'Gomme')" class="px-2.5 py-1 rounded-lg bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 text-xs font-medium ios-tap">Cambio gomme</button>
-            <button type="button" onclick="fillMaintenancePreset('Sostituzione batteria', 'Batteria/Elettronica')" class="px-2.5 py-1 rounded-lg bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 text-xs font-medium ios-tap">Batteria</button>
+          <label class="block text-xs font-bold text-slate-700 mb-1.5">Tipo di Carrozzeria</label>
+          <div id="bodyTypeSelector" class="grid grid-cols-3 gap-2">
+            <!-- Popolato via JS -->
           </div>
         </div>
 
+        <!-- Selettore Colore Carrozzeria -->
         <div>
-          <label class="block text-xs font-semibold text-slate-600 dark:text-zinc-300 mb-1">Titolo intervento *</label>
-          <input type="text" id="mTitle" required placeholder="Es. Tagliando annuale + filtro aria"
-            class="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-ios-elevatedDark text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          <label class="block text-xs font-bold text-slate-700 mb-1.5">Colore Auto</label>
+          <div id="colorSwatchSelector" class="flex items-center justify-between gap-2 bg-[#F5F6F8] p-2.5 rounded-2xl border border-slate-200/60">
+            <!-- Popolato via JS -->
+          </div>
         </div>
 
+        <!-- Marca e Modello -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Marca e Modello *</label>
+          <input type="text" id="vName" required oninput="handleModelNameAutoDetect(this.value)" placeholder="Es. Dacia Sandero, Renault Kadjar, Fiat Panda..."
+            class="w-full px-3.5 py-2.5 rounded-xl bg-[#F5F6F8] border border-slate-200/80 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#007AFF]" />
+        </div>
+
+        <!-- Targa & Chilometraggio -->
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="block text-xs font-semibold text-slate-600 dark:text-zinc-300 mb-1">Categoria *</label>
-            <select id="mCategory" class="w-full px-3 py-2.5 rounded-xl bg-slate-100 dark:bg-ios-elevatedDark text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-              <option value="Tagliando/Olio">Tagliando/Olio</option>
-              <option value="Gomme">Gomme</option>
-              <option value="Freni">Freni</option>
-              <option value="Batteria/Elettronica">Batteria/Elettronica</option>
-              <option value="Carrozzeria">Carrozzeria</option>
-              <option value="Altro">Altro</option>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Targa *</label>
+            <input type="text" id="vPlate" required maxlength="10" placeholder="GH 482 KL"
+              class="w-full px-3.5 py-2.5 rounded-xl bg-[#F5F6F8] border border-slate-200/80 text-sm font-mono font-bold uppercase focus:outline-none focus:ring-2 focus:ring-[#007AFF]" />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Chilometri Attuali *</label>
+            <input type="number" id="vKm" required min="0" inputmode="numeric" placeholder="45000"
+              class="w-full px-3.5 py-2.5 rounded-xl bg-[#F5F6F8] border border-slate-200/80 text-sm font-mono font-bold focus:outline-none focus:ring-2 focus:ring-[#007AFF]" />
+          </div>
+        </div>
+
+        <!-- Anno & Alimentazione -->
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Anno</label>
+            <input type="number" id="vYear" min="1950" max="2030" inputmode="numeric" placeholder="2022"
+              class="w-full px-3.5 py-2.5 rounded-xl bg-[#F5F6F8] border border-slate-200/80 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#007AFF]" />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Alimentazione</label>
+            <select id="vFuel" class="w-full px-3 py-2.5 rounded-xl bg-[#F5F6F8] border border-slate-200/80 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#007AFF]">
+              <option value="Benzina">Benzina</option>
+              <option value="Diesel">Diesel</option>
+              <option value="Ibrida">Ibrida</option>
+              <option value="Elettrica">Elettrica</option>
+              <option value="GPL / Metano">GPL / Metano</option>
             </select>
           </div>
-          <div>
-            <label class="block text-xs font-semibold text-slate-600 dark:text-zinc-300 mb-1">Data *</label>
-            <input type="date" id="mDate" required
-              class="w-full px-3 py-2.5 rounded-xl bg-slate-100 dark:bg-ios-elevatedDark text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-          </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block text-xs font-semibold text-slate-600 dark:text-zinc-300 mb-1">Chilometraggio (km) *</label>
-            <input type="number" id="mKm" required inputmode="numeric"
-              class="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-ios-elevatedDark text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500" />
-          </div>
-          <div>
-            <label class="block text-xs font-semibold text-slate-600 dark:text-zinc-300 mb-1">Costo (€)</label>
-            <input type="number" id="mCost" step="0.01" inputmode="decimal" placeholder="0.00"
-              class="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-ios-elevatedDark text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500" />
-          </div>
+        <div class="flex items-center gap-2 pt-2">
+          <button type="button" id="deleteVehicleBtn" onclick="confirmDeleteCurrentVehicle()"
+            class="hidden px-4 py-3.5 rounded-2xl bg-red-50 text-red-600 font-bold text-sm ios-tap" title="Elimina auto">
+            <i data-lucide="trash-2" class="w-4 h-4"></i>
+          </button>
+          <button type="submit" class="flex-1 py-3.5 rounded-2xl bg-[#007AFF] hover:bg-blue-600 text-white font-bold text-sm shadow-md ios-tap">
+            Salva nel Garage
+          </button>
         </div>
-
-        <div>
-          <label class="block text-xs font-semibold text-slate-600 dark:text-zinc-300 mb-1">Officina / Note</label>
-          <textarea id="mNotes" rows="2" placeholder="Es. Officina Rossi - Olio 5W30 Castrol Edge..."
-            class="w-full px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-ios-elevatedDark text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
-        </div>
-
-        <!-- Allegato Foto Fattura / Ricevuta -->
-        <div>
-          <label class="block text-xs font-semibold text-slate-600 dark:text-zinc-300 mb-1">Foto Fattura / Ricevuta (opzionale)</label>
-          <div class="flex items-center gap-3">
-            <label class="flex-1 py-2.5 px-3 rounded-xl border border-dashed border-slate-300 dark:border-zinc-700 text-xs font-medium text-slate-600 dark:text-zinc-300 flex items-center justify-center gap-2 cursor-pointer hover:bg-slate-50 dark:hover:bg-ios-elevatedDark/50">
-              <i data-lucide="camera" class="w-4 h-4 text-blue-500"></i>
-              <span id="photoUploadLabel">Scatta o scegli foto</span>
-              <input type="file" id="mPhotoInput" accept="image/*" onchange="handlePhotoUpload(event)" class="hidden" />
-            </label>
-            <div id="photoPreviewContainer" class="hidden relative w-14 h-14 rounded-xl overflow-hidden border border-slate-200 dark:border-zinc-700 shrink-0">
-              <img id="mPhotoPreview" src="" alt="Anteprima" class="w-full h-full object-cover" />
-              <button type="button" onclick="removeUploadedPhoto()" class="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-red-600 text-white flex items-center justify-center text-xs">×</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Promemoria Prossimo Intervento -->
-        <div class="bg-slate-50 dark:bg-ios-elevatedDark/60 rounded-2xl p-3.5 space-y-2.5">
-          <label class="flex items-center justify-between cursor-pointer">
-            <span class="text-xs font-semibold text-slate-700 dark:text-zinc-200 flex items-center gap-1.5">
-              <i data-lucide="bell-ring" class="w-4 h-4 text-blue-500"></i>
-              Imposta promemoria prossimo intervento
-            </span>
-            <input type="checkbox" id="mSetReminder" onchange="toggleReminderFields()" class="w-4 h-4 accent-blue-600 rounded" />
-          </label>
-          <div id="reminderFields" class="hidden grid grid-cols-2 gap-2.5 pt-1">
-            <div>
-              <label class="block text-[11px] text-slate-500 dark:text-zinc-400 mb-1">Tra quanti km</label>
-              <input type="number" id="mReminderKm" placeholder="Es. 15000" inputmode="numeric"
-                class="w-full px-3 py-2 rounded-xl bg-white dark:bg-ios-cardDark border border-slate-200 dark:border-zinc-700 text-xs font-mono" />
-            </div>
-            <div>
-              <label class="block text-[11px] text-slate-500 dark:text-zinc-400 mb-1">Tra quanti mesi</label>
-              <input type="number" id="mReminderMonths" placeholder="Es. 12" inputmode="numeric"
-                class="w-full px-3 py-2 rounded-xl bg-white dark:bg-ios-cardDark border border-slate-200 dark:border-zinc-700 text-xs font-mono" />
-            </div>
-          </div>
-        </div>
-
-        <button type="submit" class="w-full py-3.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm shadow-md ios-tap">
-          Salva Intervento
-        </button>
       </form>
     </div>
   </div>
 
-  <!-- ========================================== -->
-  <!-- MODAL 3: GESTIONE / RINNOVO SCADENZA       -->
-  <!-- ========================================== -->
-  <div id="deadlineModal" class="fixed inset-0 z-50 hidden bg-black/50 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
-    <div class="animate-sheet bg-white dark:bg-ios-cardDark w-full max-w-md rounded-t-3xl sm:rounded-3xl p-6 space-y-4 shadow-2xl border-t sm:border border-slate-200 dark:border-zinc-800 max-h-[90vh] overflow-y-auto">
+  <!-- ========================================================= -->
+  <!-- MODAL 2: AGGIORNAMENTO RAPIDO KM                          -->
+  <!-- ========================================================= -->
+  <div id="updateKmModal" class="fixed inset-0 z-50 hidden bg-black/45 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="animate-sheet bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl p-6 space-y-4 shadow-2xl">
       <div class="flex items-center justify-between">
-        <h3 id="deadlineModalTitle" class="text-lg font-bold">Gestisci Scadenza</h3>
-        <button onclick="closeModal('deadlineModal')" class="p-2 rounded-full bg-slate-100 dark:bg-ios-elevatedDark text-slate-500">
+        <h3 class="text-lg font-extrabold text-slate-900">Aggiorna Chilometri</h3>
+        <button onclick="closeModal('updateKmModal')" class="p-2 rounded-full bg-slate-100 text-slate-500">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+      <p class="text-xs text-slate-500">
+        Aggiornando il contachilometri vengono ricalcolate automaticamente le scadenze legate alla percorrenza.
+      </p>
+      <div>
+        <div class="relative">
+          <input type="number" id="quickKmInput" inputmode="numeric"
+            class="w-full px-4 py-3.5 rounded-2xl bg-[#F5F6F8] border border-slate-200 text-2xl font-mono font-extrabold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#007AFF]" />
+          <span class="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">km</span>
+        </div>
+        <div class="flex gap-2 mt-2.5">
+          <button type="button" onclick="addQuickKm(100)" class="flex-1 py-2 rounded-xl bg-slate-100 text-xs font-bold text-slate-700 ios-tap">+100 km</button>
+          <button type="button" onclick="addQuickKm(500)" class="flex-1 py-2 rounded-xl bg-slate-100 text-xs font-bold text-slate-700 ios-tap">+500 km</button>
+          <button type="button" onclick="addQuickKm(1000)" class="flex-1 py-2 rounded-xl bg-slate-100 text-xs font-bold text-slate-700 ios-tap">+1.000 km</button>
+        </div>
+      </div>
+      <button onclick="saveQuickKm()" class="w-full py-3.5 rounded-2xl bg-[#007AFF] text-white font-bold text-sm shadow-md ios-tap">
+        Conferma Chilometraggio
+      </button>
+    </div>
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- MODAL 3: GESTIONE / RINNOVO SCADENZA                      -->
+  <!-- ========================================================= -->
+  <div id="deadlineModal" class="fixed inset-0 z-50 hidden bg-black/45 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="animate-sheet bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between">
+        <h3 id="deadlineModalTitle" class="text-lg font-extrabold text-slate-900">Gestisci Scadenza</h3>
+        <button onclick="closeModal('deadlineModal')" class="p-2 rounded-full bg-slate-100 text-slate-500">
           <i data-lucide="x" class="w-4 h-4"></i>
         </button>
       </div>
 
-      <!-- Azioni Rapide Rinnovo (visibili solo in modifica) -->
-      <div id="quickRenewBox" class="hidden bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/50 rounded-2xl p-3.5 space-y-2">
-        <div class="text-xs font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
+      <!-- Azioni Rapide Rinnovo -->
+      <div id="quickRenewBox" class="hidden bg-emerald-50 border border-emerald-200 rounded-2xl p-3.5 space-y-2">
+        <div class="text-xs font-bold text-emerald-800 flex items-center gap-1.5">
           <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Rinnovo rapido
         </div>
         <div class="flex flex-wrap gap-2">
-          <button type="button" onclick="quickRenewDeadline(12, 0)" class="px-3 py-1.5 rounded-xl bg-emerald-600 text-white text-xs font-semibold ios-tap">+1 Anno</button>
-          <button type="button" onclick="quickRenewDeadline(24, 0)" class="px-3 py-1.5 rounded-xl bg-emerald-600 text-white text-xs font-semibold ios-tap">+2 Anni (Revisione)</button>
-          <button type="button" onclick="quickRenewDeadline(12, 15000)" class="px-3 py-1.5 rounded-xl bg-blue-600 text-white text-xs font-semibold ios-tap">+15.000 km / 1 Anno</button>
+          <button type="button" onclick="quickRenewDeadline(12, 0)" class="px-3 py-1.5 rounded-xl bg-emerald-600 text-white text-xs font-bold ios-tap">+1 Anno</button>
+          <button type="button" onclick="quickRenewDeadline(24, 0)" class="px-3 py-1.5 rounded-xl bg-emerald-600 text-white text-xs font-bold ios-tap">+2 Anni (Revisione)</button>
+          <button type="button" onclick="quickRenewDeadline(12, 15000)" class="px-3 py-1.5 rounded-xl bg-[#007AFF] text-white text-xs font-bold ios-tap">+15.000 km / 1 Anno</button>
         </div>
       </div>
 
@@ -531,46 +399,46 @@
         <input type="hidden" id="dId" />
 
         <div>
-          <label class="block text-xs font-semibold text-slate-600 dark:text-zinc-300 mb-1">Tipo / Nome Scadenza *</label>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Nome Scadenza *</label>
           <input type="text" id="dTitle" required placeholder="Es. Revisione Ministeriale, Bollo, Tagliando..."
-            class="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-ios-elevatedDark text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            class="w-full px-3.5 py-2.5 rounded-xl bg-[#F5F6F8] border border-slate-200/80 text-sm focus:outline-none focus:ring-2 focus:ring-[#007AFF]" />
         </div>
 
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="block text-xs font-semibold text-slate-600 dark:text-zinc-300 mb-1">Categoria</label>
-            <select id="dType" class="w-full px-3 py-2.5 rounded-xl bg-slate-100 dark:bg-ios-elevatedDark text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <label class="block text-xs font-bold text-slate-700 mb-1">Categoria</label>
+            <select id="dType" class="w-full px-3 py-2.5 rounded-xl bg-[#F5F6F8] border border-slate-200/80 text-sm focus:outline-none focus:ring-2 focus:ring-[#007AFF]">
               <option value="revisione">Revisione</option>
               <option value="bollo">Bollo Auto</option>
               <option value="assicurazione">Assicurazione RCA</option>
-              <option value="manutenzione">Manutenzione / Km</option>
+              <option value="manutenzione">Tagliando / Km</option>
             </select>
           </div>
           <div>
-            <label class="block text-xs font-semibold text-slate-600 dark:text-zinc-300 mb-1">Data Scadenza</label>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Data Scadenza</label>
             <input type="date" id="dDueDate"
-              class="w-full px-3 py-2.5 rounded-xl bg-slate-100 dark:bg-ios-elevatedDark text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              class="w-full px-3 py-2.5 rounded-xl bg-[#F5F6F8] border border-slate-200/80 text-sm focus:outline-none focus:ring-2 focus:ring-[#007AFF]" />
           </div>
         </div>
 
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="block text-xs font-semibold text-slate-600 dark:text-zinc-300 mb-1">Soglia Km (opzionale)</label>
-            <input type="number" id="dDueKm" placeholder="Es. 95000" inputmode="numeric"
-              class="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-ios-elevatedDark text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            <label class="block text-xs font-bold text-slate-700 mb-1">Soglia Km (opzionale)</label>
+            <input type="number" id="dDueKm" placeholder="Es. 60000" inputmode="numeric"
+              class="w-full px-3.5 py-2.5 rounded-xl bg-[#F5F6F8] border border-slate-200/80 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#007AFF]" />
           </div>
           <div>
-            <label class="block text-xs font-semibold text-slate-600 dark:text-zinc-300 mb-1">Importo / Info extra</label>
-            <input type="text" id="dMeta" placeholder="Es. € 185 o UnipolSai"
-              class="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-ios-elevatedDark text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            <label class="block text-xs font-bold text-slate-700 mb-1">Note / Importo</label>
+            <input type="text" id="dMeta" placeholder="Es. € 190 o Allianz"
+              class="w-full px-3.5 py-2.5 rounded-xl bg-[#F5F6F8] border border-slate-200/80 text-sm focus:outline-none focus:ring-2 focus:ring-[#007AFF]" />
           </div>
         </div>
 
         <div class="flex items-center gap-2 pt-2">
-          <button type="button" id="deleteDeadlineBtn" onclick="deleteCurrentDeadline()" class="hidden px-4 py-3 rounded-2xl bg-red-50 dark:bg-red-950/40 text-red-600 font-semibold text-sm ios-tap">
+          <button type="button" id="deleteDeadlineBtn" onclick="deleteCurrentDeadline()" class="hidden px-4 py-3.5 rounded-2xl bg-red-50 text-red-600 font-bold text-sm ios-tap">
             <i data-lucide="trash-2" class="w-4 h-4"></i>
           </button>
-          <button type="submit" class="flex-1 py-3.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm shadow-md ios-tap">
+          <button type="submit" class="flex-1 py-3.5 rounded-2xl bg-[#007AFF] text-white font-bold text-sm shadow-md ios-tap">
             Salva Scadenza
           </button>
         </div>
@@ -578,278 +446,358 @@
     </div>
   </div>
 
-  <!-- ========================================== -->
-  <!-- MODAL 4: AGGIUNGI / MODIFICA VEICOLO       -->
-  <!-- ========================================== -->
-  <div id="vehicleModal" class="fixed inset-0 z-50 hidden bg-black/50 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
-    <div class="animate-sheet bg-white dark:bg-ios-cardDark w-full max-w-md rounded-t-3xl sm:rounded-3xl p-6 space-y-4 shadow-2xl border-t sm:border border-slate-200 dark:border-zinc-800">
+  <!-- ========================================================= -->
+  <!-- MODAL 4: NUOVO / MODIFICA INTERVENTO MANUTENZIONE         -->
+  <!-- ========================================================= -->
+  <div id="maintenanceModal" class="fixed inset-0 z-50 hidden bg-black/45 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="animate-sheet bg-white w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-6 space-y-4 shadow-2xl max-h-[92vh] overflow-y-auto">
       <div class="flex items-center justify-between">
-        <h3 id="vehicleModalTitle" class="text-lg font-bold">Nuovo Veicolo</h3>
-        <button onclick="closeModal('vehicleModal')" class="p-2 rounded-full bg-slate-100 dark:bg-ios-elevatedDark text-slate-500">
+        <h3 id="maintenanceModalTitle" class="text-lg font-extrabold text-slate-900">Registra Intervento</h3>
+        <button onclick="closeModal('maintenanceModal')" class="p-2 rounded-full bg-slate-100 text-slate-500">
           <i data-lucide="x" class="w-4 h-4"></i>
         </button>
       </div>
 
-      <form id="vehicleForm" onsubmit="saveVehicle(event)" class="space-y-3.5">
-        <input type="hidden" id="vId" />
+      <form id="maintenanceForm" onsubmit="saveMaintenance(event)" class="space-y-3.5">
+        <input type="hidden" id="mId" />
+
+        <!-- Voci rapide -->
+        <div class="flex flex-wrap gap-1.5">
+          <button type="button" onclick="fillMaintenancePreset('Tagliando completo', 'Tagliando')" class="px-2.5 py-1 rounded-lg bg-blue-50 text-[#007AFF] text-xs font-semibold ios-tap">Tagliando completo</button>
+          <button type="button" onclick="fillMaintenancePreset('Cambio olio e filtro', 'Tagliando')" class="px-2.5 py-1 rounded-lg bg-blue-50 text-[#007AFF] text-xs font-semibold ios-tap">Cambio olio</button>
+          <button type="button" onclick="fillMaintenancePreset('Cambio gomme stagionale', 'Gomme')" class="px-2.5 py-1 rounded-lg bg-blue-50 text-[#007AFF] text-xs font-semibold ios-tap">Cambio gomme</button>
+          <button type="button" onclick="fillMaintenancePreset('Pastiglie freni', 'Freni')" class="px-2.5 py-1 rounded-lg bg-blue-50 text-[#007AFF] text-xs font-semibold ios-tap">Pastiglie freni</button>
+          <button type="button" onclick="fillMaintenancePreset('Revisione ministeriale', 'Altro')" class="px-2.5 py-1 rounded-lg bg-blue-50 text-[#007AFF] text-xs font-semibold ios-tap">Revisione</button>
+        </div>
 
         <div>
-          <label class="block text-xs font-semibold text-slate-600 dark:text-zinc-300 mb-1">Marca e Modello *</label>
-          <input type="text" id="vName" required placeholder="Es. Volkswagen Golf 1.6 TDI"
-            class="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-ios-elevatedDark text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          <label class="block text-xs font-bold text-slate-700 mb-1">Descrizione Lavoro *</label>
+          <input type="text" id="mTitle" required placeholder="Es. Tagliando annuale + filtro aria"
+            class="w-full px-3.5 py-2.5 rounded-xl bg-[#F5F6F8] border border-slate-200/80 text-sm focus:outline-none focus:ring-2 focus:ring-[#007AFF]" />
         </div>
 
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="block text-xs font-semibold text-slate-600 dark:text-zinc-300 mb-1">Targa *</label>
-            <input type="text" id="vPlate" required maxlength="10" placeholder="GH 482 KL"
-              class="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-ios-elevatedDark text-sm font-mono uppercase focus:outline-none focus:ring-2 focus:ring-blue-500" />
-          </div>
-          <div>
-            <label class="block text-xs font-semibold text-slate-600 dark:text-zinc-300 mb-1">Anno Immatricolazione *</label>
-            <input type="number" id="vYear" required min="1950" max="2030" placeholder="2021" inputmode="numeric"
-              class="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-ios-elevatedDark text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500" />
-          </div>
-        </div>
-
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block text-xs font-semibold text-slate-600 dark:text-zinc-300 mb-1">Chilometraggio Attuale *</label>
-            <input type="number" id="vKm" required min="0" placeholder="64500" inputmode="numeric"
-              class="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-ios-elevatedDark text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500" />
-          </div>
-          <div>
-            <label class="block text-xs font-semibold text-slate-600 dark:text-zinc-300 mb-1">Tipo Veicolo</label>
-            <select id="vType" class="w-full px-3 py-2.5 rounded-xl bg-slate-100 dark:bg-ios-elevatedDark text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-              <option value="car">Automobile</option>
-              <option value="moto">Moto / Scooter</option>
-              <option value="van">Furgone / Camper</option>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Categoria</label>
+            <select id="mCategory" class="w-full px-3 py-2.5 rounded-xl bg-[#F5F6F8] border border-slate-200/80 text-sm focus:outline-none focus:ring-2 focus:ring-[#007AFF]">
+              <option value="Tagliando">Tagliando</option>
+              <option value="Gomme">Gomme</option>
+              <option value="Freni">Freni</option>
+              <option value="Altro">Altro</option>
             </select>
           </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Data *</label>
+            <input type="date" id="mDate" required
+              class="w-full px-3 py-2.5 rounded-xl bg-[#F5F6F8] border border-slate-200/80 text-sm focus:outline-none focus:ring-2 focus:ring-[#007AFF]" />
+          </div>
         </div>
 
-        <button type="submit" class="w-full py-3.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm shadow-md ios-tap">
-          Salva Veicolo
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Chilometri (km) *</label>
+            <input type="number" id="mKm" required inputmode="numeric"
+              class="w-full px-3.5 py-2.5 rounded-xl bg-[#F5F6F8] border border-slate-200/80 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#007AFF]" />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Costo (€)</label>
+            <input type="number" id="mCost" step="0.01" inputmode="decimal" placeholder="0.00"
+              class="w-full px-3.5 py-2.5 rounded-xl bg-[#F5F6F8] border border-slate-200/80 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#007AFF]" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Officina / Note</label>
+          <textarea id="mNotes" rows="2" placeholder="Es. Officina Rossi - Olio 5W30..."
+            class="w-full px-3.5 py-2 rounded-xl bg-[#F5F6F8] border border-slate-200/80 text-sm focus:outline-none focus:ring-2 focus:ring-[#007AFF]"></textarea>
+        </div>
+
+        <!-- Foto Fattura / Ricevuta -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Foto Ricevuta / Fattura (opzionale)</label>
+          <div class="flex items-center gap-3">
+            <label class="flex-1 py-2.5 px-3 rounded-xl border border-dashed border-slate-300 text-xs font-semibold text-slate-600 flex items-center justify-center gap-2 cursor-pointer hover:bg-slate-50">
+              <i data-lucide="camera" class="w-4 h-4 text-[#007AFF]"></i>
+              <span id="photoUploadLabel">Allega foto ricevuta</span>
+              <input type="file" id="mPhotoInput" accept="image/*" onchange="handlePhotoUpload(event)" class="hidden" />
+            </label>
+            <div id="photoPreviewContainer" class="hidden relative w-12 h-12 rounded-xl overflow-hidden border border-slate-200 shrink-0">
+              <img id="mPhotoPreview" src="" alt="Anteprima" class="w-full h-full object-cover" />
+              <button type="button" onclick="removeUploadedPhoto()" class="absolute top-0 right-0 w-5 h-5 bg-red-600 text-white flex items-center justify-center text-xs">×</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Promemoria automatico successivo -->
+        <div class="bg-[#F5F6F8] rounded-2xl p-3.5 space-y-2">
+          <label class="flex items-center justify-between cursor-pointer">
+            <span class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+              <i data-lucide="bell" class="w-4 h-4 text-[#007AFF]"></i>
+              Crea promemoria prossimo intervento
+            </span>
+            <input type="checkbox" id="mSetReminder" onchange="toggleReminderFields()" class="w-4 h-4 accent-[#007AFF] rounded" />
+          </label>
+          <div id="reminderFields" class="hidden grid grid-cols-2 gap-2.5 pt-1">
+            <div>
+              <label class="block text-[11px] text-slate-500 mb-1">Tra quanti km</label>
+              <input type="number" id="mReminderKm" placeholder="Es. 15000" inputmode="numeric"
+                class="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs font-mono" />
+            </div>
+            <div>
+              <label class="block text-[11px] text-slate-500 mb-1">Tra quanti mesi</label>
+              <input type="number" id="mReminderMonths" placeholder="Es. 12" inputmode="numeric"
+                class="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs font-mono" />
+            </div>
+          </div>
+        </div>
+
+        <button type="submit" class="w-full py-3.5 rounded-2xl bg-[#007AFF] text-white font-bold text-sm shadow-md ios-tap">
+          Salva Intervento
         </button>
       </form>
     </div>
   </div>
 
-  <!-- ========================================== -->
-  <!-- MODAL 5: LIGHTBOX FOTO FATTURA / RICEVUTA  -->
-  <!-- ========================================== -->
-  <div id="photoViewerModal" onclick="closeModal('photoViewerModal')" class="fixed inset-0 z-50 hidden bg-black/90 flex flex-col items-center justify-center p-4">
-    <div class="w-full max-w-lg flex justify-end mb-2">
-      <button onclick="closeModal('photoViewerModal')" class="p-2.5 rounded-full bg-white/15 text-white">
-        <i data-lucide="x" class="w-5 h-5"></i>
-      </button>
-    </div>
-    <img id="lightboxImg" src="" alt="Documento allegato" class="max-h-[80vh] max-w-full rounded-2xl shadow-2xl object-contain" onclick="event.stopPropagation()" />
-  </div>
-
-  <!-- ========================================== -->
-  <!-- MODAL 6: GUIDA INSTALLAZIONE SU IPHONE     -->
-  <!-- ========================================== -->
-  <div id="installGuideModal" class="fixed inset-0 z-50 hidden bg-black/50 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
-    <div class="animate-sheet bg-white dark:bg-ios-cardDark w-full max-w-md rounded-t-3xl sm:rounded-3xl p-6 space-y-4 shadow-2xl border-t sm:border border-slate-200 dark:border-zinc-800">
+  <!-- ========================================================= -->
+  <!-- MODAL 5: BACKUP LOCALE & GUIDA INSTALLAZIONE              -->
+  <!-- ========================================================= -->
+  <div id="backupModal" class="fixed inset-0 z-50 hidden bg-black/45 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="animate-sheet bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
       <div class="flex items-center justify-between">
-        <h3 class="text-lg font-bold">Installa su iPhone</h3>
-        <button onclick="closeModal('installGuideModal')" class="p-2 rounded-full bg-slate-100 dark:bg-ios-elevatedDark text-slate-500">
+        <h3 class="text-lg font-extrabold text-slate-900">Dati & Backup Locale</h3>
+        <button onclick="closeModal('backupModal')" class="p-2 rounded-full bg-slate-100 text-slate-500">
           <i data-lucide="x" class="w-4 h-4"></i>
         </button>
       </div>
-      <p class="text-xs text-slate-500 dark:text-zinc-400 leading-relaxed">
-        Puoi aggiungere <strong>Libretto Auto</strong> alla schermata Home del tuo iPhone per aprirla a schermo intero come un'app tradizionale, senza barra di Safari:
+
+      <p class="text-xs text-slate-500 leading-relaxed">
+        Tutti i veicoli, le scadenze e le foto sono salvati <strong>solo nella memoria del tuo telefonino</strong>. Esporta ogni tanto un file di backup per tenerli al sicuro.
       </p>
-      <div class="space-y-3 text-sm">
-        <div class="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 dark:bg-ios-elevatedDark">
-          <span class="w-7 h-7 rounded-full bg-blue-600 text-white font-bold text-xs flex items-center justify-center shrink-0">1</span>
-          <span class="text-xs">Tocca il tasto <strong>Condividi</strong> <i data-lucide="share" class="w-3.5 h-3.5 inline text-blue-500"></i> nella barra inferiore di Safari.</span>
-        </div>
-        <div class="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 dark:bg-ios-elevatedDark">
-          <span class="w-7 h-7 rounded-full bg-blue-600 text-white font-bold text-xs flex items-center justify-center shrink-0">2</span>
-          <span class="text-xs">Scorri il menu verso l'alto e seleziona <strong>"Aggiungi alla schermata Home"</strong>.</span>
-        </div>
-        <div class="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 dark:bg-ios-elevatedDark">
-          <span class="w-7 h-7 rounded-full bg-blue-600 text-white font-bold text-xs flex items-center justify-center shrink-0">3</span>
-          <span class="text-xs">Tocca <strong>Aggiungi</strong> in alto a destra. Troverai l'icona tra le tue app!</span>
-        </div>
-      </div>
-      <button onclick="closeModal('installGuideModal')" class="w-full py-3 rounded-2xl bg-blue-600 text-white font-semibold text-sm ios-tap">
-        Ho capito
-      </button>
-    </div>
-  </div>
 
-  <!-- ========================================== -->
-  <!-- MODAL 7: CONFERMA PERSONALIZZATA (NO ALERT)-->
-  <!-- ========================================== -->
-  <div id="confirmDialogModal" class="fixed inset-0 z-50 hidden bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
-    <div class="bg-white dark:bg-ios-cardDark w-full max-w-sm rounded-3xl p-6 space-y-4 shadow-2xl border border-slate-200 dark:border-zinc-800 text-center">
-      <div class="w-12 h-12 rounded-2xl bg-amber-100 dark:bg-amber-950/60 text-amber-600 mx-auto flex items-center justify-center">
-        <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+      <!-- Barra spazio occupato -->
+      <div class="bg-[#F5F6F8] rounded-2xl p-3.5 space-y-1.5 border border-slate-200/60">
+        <div class="flex justify-between text-xs">
+          <span class="font-semibold text-slate-600">Memoria utilizzata</span>
+          <span id="storageUsageText" class="font-mono font-bold text-slate-900">0 KB / 5 MB</span>
+        </div>
+        <div class="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+          <div id="storageUsageBar" class="h-full bg-[#007AFF] rounded-full transition-all" style="width: 2%"></div>
+        </div>
       </div>
-      <div>
-        <h3 id="confirmTitle" class="text-base font-bold">Conferma azione</h3>
-        <p id="confirmMessage" class="text-xs text-slate-500 dark:text-zinc-400 mt-1 leading-relaxed"></p>
-      </div>
-      <div class="grid grid-cols-2 gap-2.5 pt-1">
-        <button onclick="closeModal('confirmDialogModal')" class="py-2.5 rounded-xl bg-slate-100 dark:bg-ios-elevatedDark text-slate-700 dark:text-zinc-200 text-xs font-semibold ios-tap">
-          Annulla
+
+      <div class="grid grid-cols-1 gap-2.5">
+        <button onclick="exportBackupJSON()"
+          class="w-full py-3 px-4 rounded-2xl bg-slate-900 text-white font-bold text-xs flex items-center justify-center gap-2 ios-tap">
+          <i data-lucide="download" class="w-4 h-4"></i> Scarica Backup (.json)
         </button>
-        <button id="confirmOkBtn" class="py-2.5 rounded-xl bg-red-600 text-white text-xs font-semibold ios-tap">
-          Conferma
-        </button>
+
+        <label class="w-full py-3 px-4 rounded-2xl bg-[#F5F6F8] border border-slate-200 text-slate-800 font-bold text-xs flex items-center justify-center gap-2 cursor-pointer ios-tap">
+          <i data-lucide="upload" class="w-4 h-4"></i> Ripristina da Backup (.json)
+          <input type="file" accept=".json,application/json" onchange="importBackupJSON(event)" class="hidden" />
+        </label>
       </div>
-    </div>
-  </div>
 
-  <!-- TOAST NOTIFICHE NON INVASIVO -->
-  <div id="toast" class="fixed top-16 left-1/2 -translate-x-1/2 z-50 pointer-events-none opacity-0 transition-all duration-300">
-    <div class="px-4 py-2.5 rounded-full bg-slate-900/90 dark:bg-white/95 text-white dark:text-slate-900 text-xs font-semibold shadow-lg flex items-center gap-2 backdrop-blur-md">
-      <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400 dark:text-emerald-600"></i>
-      <span id="toastMessage">Operazione completata</span>
-    </div>
-  </div>
+      <!-- Guida iPhone -->
+    // Tipi di carrozzeria e modelli su misura disponibili con silhouette SVG dettagliate
+    const BODY_TYPES = [
+      { id: 'sandero', label: 'Dacia Sandero', defaultColor: 'white' },
+      { id: 'kadjar', label: 'Renault Kadjar', defaultColor: 'gray' },
+      { id: 'citycar', label: 'Citycar', defaultColor: 'blue' },
+      { id: 'berlina', label: 'Berlina', defaultColor: 'blue' },
+      { id: 'suv', label: 'SUV', defaultColor: 'gray' },
+      { id: 'sw', label: 'Station Wagon', defaultColor: 'silver' },
+      { id: 'sportiva', label: 'Sportiva', defaultColor: 'red' },
+      { id: 'van', label: 'Furgone', defaultColor: 'white' }
+    ];
 
-  <!-- ========================================== -->
-  <!-- LOGICA APPLICATIVA JAVASCRIPT              -->
-  <!-- ========================================== -->
-  <script>
-    const STORAGE_KEY = 'libretto_auto_data_v1';
-    const THEME_KEY = 'libretto_auto_theme';
+    // Palette colori carrozzeria con sfumature realistiche
+    const CAR_COLORS = [
+      { id: 'white', label: 'Bianco Ghiaccio', hex: '#F8FAFC', stroke: '#CBD5E1' },
+      { id: 'silver', label: 'Argento', hex: '#CBD5E1', stroke: '#94A3B8' },
+      { id: 'gray', label: 'Grigio Titanio', hex: '#64748B', stroke: '#334155' },
+      { id: 'black', label: 'Nero', hex: '#1E293B', stroke: '#0F172A' },
+      { id: 'blue', label: 'Blu', hex: '#2563EB', stroke: '#1D4ED8' },
+      { id: 'red', label: 'Rosso', hex: '#DC2626', stroke: '#B91C1C' },
+      { id: 'green', label: 'Verde', hex: '#16A34A', stroke: '#15803D' },
+      { id: 'gold', label: 'Sabbia/Oro', hex: '#D97706', stroke: '#B45309' }
+    ];
 
     let appState = {
-      activeVehicleId: null,
-      isDemo: false,
       vehicles: [],
       deadlines: [],
       maintenances: []
     };
 
+    let currentVehicleId = null;
+    let selectedBodyType = 'sandero';
+    let selectedColorId = 'white';
+    let userManuallyPickedColor = false;
     let selectedCategoryFilter = 'Tutti';
     let currentUploadedPhotoBase64 = null;
 
     // ---------------------------------------------------------
-    // 1. INIZIALIZZAZIONE & DATI DEMO REALISTICI
+    // 1. GENERATORE SVG AVATAR AUTO DINAMICO (MODELLO + COLORE)
+    // ---------------------------------------------------------
+    function renderCarSVG(bodyType = 'sandero', colorId = 'white', className = 'w-32 h-16') {
+      const colorObj = CAR_COLORS.find(c => c.id === colorId) || CAR_COLORS[0];
+      const fill = colorObj.hex;
+      const stroke = colorObj.stroke;
+
+      // Silhouettes vettoriali pulite e dettagliate vista profilo
+      const shapes = {
+        sandero: `
+          <!-- Ombra a terra -->
+          <ellipse cx="102" cy="76" rx="80" ry="5" fill="#0F172A" opacity="0.12"/>
+          <!-- Scocca Dacia Sandero (Hatchback compatta crossover moderna senza barre sul tetto) -->
+          <path d="M22 55 C21 46, 25 39, 36 37 L53 19 C58 16, 65 15, 86 15 L122 15 C135 15, 143 20, 154 36 L175 39 C182 41, 185 46, 185 54 L185 62 C185 65, 181 67, 175 67 L28 67 C23 67, 22 64, 22 60 Z"
+                fill="${fill}" stroke="${stroke}" stroke-width="2.2" stroke-linejoin="round"/>
+          <!-- Riflesso linea di cintura scolpita -->
+          <path d="M40 42 Q102 39 166 43" fill="none" stroke="#FFFFFF" stroke-width="1.3" opacity="0.55" stroke-linecap="round"/>
+          <!-- Protezioni sottoscocca e passaruota Stepway in plastica scura -->
+          <path d="M23 61 L184 61 L182 67 L25 67 Z" fill="#1E293B"/>
+          <path d="M36 66 A16 16 0 0 1 68 66" fill="none" stroke="#1E293B" stroke-width="3.5" stroke-linecap="round"/>
+          <path d="M134 66 A16 16 0 0 1 166 66" fill="none" stroke="#1E293B" stroke-width="3.5" stroke-linecap="round"/>
+          <!-- Finestrini oscurati con montante B nero -->
+          <path d="M57 20 L89 20 L89 35 L43 35 Z" fill="#1E293B" opacity="0.86"/>
+          <path d="M94 20 L121 20 C130 20, 137 25, 144 35 L94 35 Z" fill="#1E293B" opacity="0.86"/>
+          <!-- Specchietto retrovisore -->
+          <rect x="131" y="33" width="8" height="5" rx="2" fill="#1E293B"/>
+          <!-- Faro anteriore LED con firma luminosa a Y orizzontale Dacia -->
+          <path d="M172 42 L184 43 L184 49 L174 48 Z" fill="#0F172A"/>
+          <path d="M174 45.5 L180 45.5 M180 45.5 L183.5 43.5 M180 45.5 L183.5 47.5" stroke="#F8FAFC" stroke-width="1.4" stroke-linecap="round"/>
+          <!-- Fanale posteriore LED -->
+          <path d="M22 42 L29 42 L28 49 L22 49 Z" fill="#DC2626"/>
+          <line x1="23" y1="45.5" x2="27.5" y2="45.5" stroke="#FCA5A5" stroke-width="1.2"/>
+        `,
+        kadjar: `
+          <!-- Ombra a terra -->
+          <ellipse cx="102" cy="76" rx="85" ry="5.5" fill="#0F172A" opacity="0.13"/>
+          <!-- Barre longitudinali sul tetto cromate -->
+          <path d="M52 10 L132 10" stroke="#94A3B8" stroke-width="2.3" stroke-linecap="round"/>
+          <!-- Scocca Renault Kadjar (SUV medio muscoloso con linea cintura rialzata) -->
+          <path d="M15 52 C15 41, 20 35, 31 33 L47 15 C52 12, 60 11, 82 11 L128 11 C141 11, 149 16, 161 33 L181 36 C188 38, 191 43, 191 52 L191 61 C191 65, 187 67, 180 67 L22 67 C16 67, 15 64, 15 59 Z"
+                fill="${fill}" stroke="${stroke}" stroke-width="2.2" stroke-linejoin="round"/>
+          <!-- Nervatura muscolosa sulle fiancate stile Renault -->
+          <path d="M35 39 Q104 36 172 40" fill="none" stroke="#FFFFFF" stroke-width="1.4" opacity="0.45" stroke-linecap="round"/>
+          <path d="M68 54 Q102 51 136 54" fill="none" stroke="#0F172A" stroke-width="1.5" opacity="0.22" stroke-linecap="round"/>
+          <!-- Protezioni sottoscocca e passaruota SUV con inserto cromato -->
+          <path d="M16 60 L190 60 L188 67 L18 67 Z" fill="#1E293B"/>
+          <line x1="68" y1="63.5" x2="136" y2="63.5" stroke="#CBD5E1" stroke-width="1.6" stroke-linecap="round"/>
+          <path d="M34 66 A17 17 0 0 1 68 66" fill="none" stroke="#1E293B" stroke-width="3.8" stroke-linecap="round"/>
+          <path d="M136 66 A17 17 0 0 1 170 66" fill="none" stroke="#1E293B" stroke-width="3.8" stroke-linecap="round"/>
+          <!-- Finestrini oscurati con profilo cromato inferiore e terza luce -->
+          <path d="M52 16 L88 16 L88 32 L39 32 Z" fill="#1E293B" opacity="0.88"/>
+          <path d="M93 16 L124 16 C134 16, 141 21, 149 32 L93 32 Z" fill="#1E293B" opacity="0.88"/>
+          <path d="M39 32.5 L149 32.5" stroke="#CBD5E1" stroke-width="1.1"/>
+          <!-- Specchietto retrovisore bicolore -->
+          <rect x="134" y="30" width="9" height="5.5" rx="2.2" fill="#1E293B"/>
+          <!-- Faro anteriore LED con caratteristica firma a C (C-Shape) Renault -->
+          <path d="M174 39 L190 41 L190 48 L176 47 Z" fill="#0F172A"/>
+          <path d="M188 41.5 L181 41.5 C178 41.5, 178 46.5, 181 46.5 L188 46.5" fill="none" stroke="#38BDF8" stroke-width="1.5" stroke-linecap="round"/>
+          <!-- Fanale posteriore LED avvolgente -->
+          <path d="M15 39 L26 40 L25 47 L15 47 Z" fill="#DC2626"/>
+          <path d="M17 42 L24 42.5 L23 45 L17 45" fill="none" stroke="#FCA5A5" stroke-width="1.2"/>
+        `,
+        berlina: `
+          <!-- Ombra a terra -->
+          <ellipse cx="100" cy="76" rx="82" ry="5" fill="#0F172A" opacity="0.10"/>
+          <!-- Scocca Berlina -->
+          <path d="M18 56 C18 48, 24 44, 38 42 L62 24 C68 20, 76 19, 96 19 L126 19 C140 19, 148 23, 160 39 L178 42 C185 44, 188 49, 188 56 L188 63 C188 66, 184 68, 178 68 L24 68 C19 68, 18 65, 18 61 Z"
+                fill="${fill}" stroke="${stroke}" stroke-width="2.2" stroke-linejoin="round"/>
+          <!-- Finestrini -->
+          <path d="M66 25 L95 25 L95 40 L47 40 Z" fill="#1E293B" opacity="0.82"/>
+          <path d="M101 25 L125 25 C135 25, 142 29, 150 40 L101 40 Z" fill="#1E293B" opacity="0.82"/>
+          <!-- Dettaglio fari -->
+          <rect x="180" y="47" width="7" height="5" rx="2" fill="#FEF08A"/>
+          <rect x="18" y="47" width="5" height="6" rx="1.5" fill="#EF4444"/>
+        `,
+        citycar: `
+          <ellipse cx="100" cy="76" rx="72" ry="5" fill="#0F172A" opacity="0.10"/>
+          <!-- Scocca Citycar compatta -->
+          <path d="M28 56 C28 47, 33 42, 46 40 L64 21 C70 17, 78 16, 102 16 L124 16 C136 16, 143 22, 152 39 L168 42 C174 44, 177 49, 177 56 L177 63 C177 66, 173 68, 168 68 L34 68 C29 68, 28 65, 28 61 Z"
+                fill="${fill}" stroke="${stroke}" stroke-width="2.2" stroke-linejoin="round"/>
+          <path d="M68 22 L98 22 L98 38 L53 38 Z" fill="#1E293B" opacity="0.82"/>
+          <path d="M104 22 L123 22 C131 22, 137 27, 143 38 L104 38 Z" fill="#1E293B" opacity="0.82"/>
+          <rect x="170" y="47" width="6" height="5" rx="2" fill="#FEF08A"/>
+          <rect x="28" y="47" width="5" height="6" rx="1.5" fill="#EF4444"/>
+        `,
+        suv: `
+          <ellipse cx="100" cy="76" rx="84" ry="5" fill="#0F172A" opacity="0.10"/>
+          <!-- Scocca SUV / Crossover alta -->
+          <path d="M16 53 C16 43, 21 37, 32 35 L46 17 C51 13, 58 12, 76 12 L130 12 C142 12, 149 17, 159 35 L179 38 C186 40, 189 45, 189 53 L189 62 C189 65, 185 67, 179 67 L22 67 C17 67, 16 64, 16 60 Z"
+                fill="${fill}" stroke="${stroke}" stroke-width="2.2" stroke-linejoin="round"/>
+          <!-- Barre sul tetto -->
+          <line x1="56" y1="10" x2="132" y2="10" stroke="#64748B" stroke-width="2.2" stroke-linecap="round"/>
+          <!-- Finestrini -->
+          <path d="M51 18 L86 18 L86 34 L39 34 Z" fill="#1E293B" opacity="0.82"/>
+          <path d="M92 18 L128 18 C137 18, 143 23, 150 34 L92 34 Z" fill="#1E293B" opacity="0.82"/>
+          <rect x="181" y="43" width="7" height="6" rx="2" fill="#FEF08A"/>
+          <rect x="16" y="42" width="5" height="7" rx="1.5" fill="#EF4444"/>
+        `,
+        sw: `
+          <ellipse cx="100" cy="76" rx="85" ry="5" fill="#0F172A" opacity="0.10"/>
+          <!-- Scocca Station Wagon allungata -->
+          <path d="M15 55 C15 46, 19 40, 27 38 L37 19 C41 16, 47 15, 62 15 L128 15 C140 15, 148 20, 159 38 L180 41 C186 43, 189 48, 189 55 L189 63 C189 66, 185 68, 179 68 L21 68 C16 68, 15 65, 15 61 Z"
+                fill="${fill}" stroke="${stroke}" stroke-width="2.2" stroke-linejoin="round"/>
+          <!-- Finestrini (3 luci) -->
+          <path d="M41 21 L66 21 L66 37 L33 37 Z" fill="#1E293B" opacity="0.82"/>
+          <path d="M71 21 L101 21 L101 37 L71 37 Z" fill="#1E293B" opacity="0.82"/>
+          <path d="M106 21 L126 21 C135 21, 142 26, 149 37 L106 37 Z" fill="#1E293B" opacity="0.82"/>
+          <rect x="181" y="46" width="7" height="5" rx="2" fill="#FEF08A"/>
+          <rect x="15" y="44" width="5" height="7" rx="1.5" fill="#EF4444"/>
+        `,
+        sportiva: `
+          <ellipse cx="100" cy="76" rx="84" ry="5" fill="#0F172A" opacity="0.10"/>
+          <!-- Scocca Sportiva / Coupé bassa e filante -->
+          <path d="M16 58 C16 51, 22 47, 36 45 L66 26 C74 22, 84 21, 104 21 L122 21 C134 21, 144 26, 158 41 L182 46 C188 48, 190 52, 190 58 L190 64 C190 67, 186 68, 180 68 L22 68 C17 68, 16 66, 16 62 Z"
+                fill="${fill}" stroke="${stroke}" stroke-width="2.2" stroke-linejoin="round"/>
+          <path d="M71 26 L118 26 C129 26, 138 31, 148 41 L51 41 Z" fill="#1E293B" opacity="0.85"/>
+          <rect x="182" y="50" width="7" height="4" rx="2" fill="#FEF08A"/>
+          <rect x="16" y="50" width="6" height="4" rx="1.5" fill="#EF4444"/>
+        `,
+      const selectedShape = shapes[bodyType] || shapes.sandero;
+
+      // Posizione e dimensione ruote adattate al modello
+      const wheelConfig = {
+        sandero: { w1x: 52, w2x: 150, r: 13.8, alloy: true },
+        kadjar: { w1x: 51, w2x: 153, r: 15.2, alloy: true },
+        citycar: { w1x: 56, w2x: 148, r: 13.2, alloy: false },
+        suv: { w1x: 52, w2x: 152, r: 14.8, alloy: true }
+      };
+      const cfg = wheelConfig[bodyType] || { w1x: 52, w2x: 152, r: 13.5, alloy: false };
+      const w1x = cfg.w1x;
+      const w2x = cfg.w2x;
+      const wheelRadius = cfg.r;
+
+      const renderWheel = (cx) => `
+        <circle cx="${cx}" cy="66" r="${wheelRadius}" fill="#0F172A"/>
+        <circle cx="${cx}" cy="66" r="${wheelRadius * 0.62}" fill="#E2E8F0"/>
+        ${cfg.alloy ? `
+          <circle cx="${cx}" cy="66" r="${wheelRadius * 0.48}" fill="#334155"/>
+          <line x1="${cx - wheelRadius * 0.48}" y1="66" x2="${cx + wheelRadius * 0.48}" y2="66" stroke="#F8FAFC" stroke-width="1.6"/>
+          <line x1="${cx}" y1="${66 - wheelRadius * 0.48}" x2="${cx}" y2="${66 + wheelRadius * 0.48}" stroke="#F8FAFC" stroke-width="1.6"/>
+        ` : ''}
+        <circle cx="${cx}" cy="66" r="${wheelRadius * 0.20}" fill="#0F172A"/>
+      `;
+
+      return `
+        <svg viewBox="0 0 205 84" class="${className}" xmlns="http://www.w3.org/2000/svg">
+          ${selectedShape}
+          ${renderWheel(w1x)}
+          ${renderWheel(w2x)}
+        </svg>
+      `;
+    }
+
+    // ---------------------------------------------------------
+    // 2. INIZIALIZZAZIONE & PERSISTENZA LOCALSTORAGE
     // ---------------------------------------------------------
     function initApp() {
-      initTheme();
       loadDataFromStorage();
-      renderAll();
+      document.getElementById('emptyStateCarPreview').innerHTML = renderCarSVG('sandero', 'white', 'w-44 h-24');
+      renderGarageHome();
+      updateStorageMeter();
       lucide.createIcons();
-    }
-
-    function initTheme() {
-      const savedTheme = localStorage.getItem(THEME_KEY);
-      if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-        document.documentElement.classList.add('dark');
-      } else {
-        document.documentElement.classList.remove('dark');
-      }
-    }
-
-    function toggleTheme() {
-      const isDark = document.documentElement.classList.toggle('dark');
-      localStorage.setItem(THEME_KEY, isDark ? 'dark' : 'light');
-    }
-
-    function getSeedDemoData() {
-      const today = new Date();
-      const formatOffsetDate = (daysOffset) => {
-        const d = new Date(today);
-        d.setDate(d.getDate() + daysOffset);
-        return d.toISOString().split('T')[0];
-      };
-
-      const v1Id = 'veh_demo_1';
-      return {
-        activeVehicleId: v1Id,
-        isDemo: true,
-        vehicles: [
-          {
-            id: v1Id,
-            name: 'Volkswagen Golf 1.5 TSI',
-            plate: 'GH 482 KL',
-            year: 2022,
-            km: 58400,
-            type: 'car'
-          }
-        ],
-        deadlines: [
-          {
-            id: 'dl_1',
-            vehicleId: v1Id,
-            title: 'Revisione Ministeriale',
-            type: 'revisione',
-            dueDate: formatOffsetDate(195),
-            dueKm: null,
-            meta: 'Centro Revisioni Autorizzato'
-          },
-          {
-            id: 'dl_2',
-            vehicleId: v1Id,
-            title: 'Assicurazione RCA + Furto',
-            type: 'assicurazione',
-            dueDate: formatOffsetDate(18), // Giallo: entro 30 giorni!
-            dueKm: null,
-            meta: 'Polizza Allianz • € 460'
-          },
-          {
-            id: 'dl_3',
-            vehicleId: v1Id,
-            title: 'Bollo Auto Regionale',
-            type: 'bollo',
-            dueDate: formatOffsetDate(110),
-            dueKm: null,
-            meta: 'Importo € 215,00'
-          },
-          {
-            id: 'dl_4',
-            vehicleId: v1Id,
-            title: 'Prossimo Tagliando & Olio',
-            type: 'manutenzione',
-            dueDate: formatOffsetDate(140),
-            dueKm: 60000, // Quasi raggiunti (58.400 / 60.000)
-            meta: 'Olio 0W20 + Filtri'
-          }
-        ],
-        maintenances: [
-          {
-            id: 'mnt_1',
-            vehicleId: v1Id,
-            title: 'Tagliando completo + Filtro abitacolo',
-            category: 'Tagliando/Olio',
-            date: formatOffsetDate(-190),
-            km: 45100,
-            cost: 245.00,
-            notes: 'Officina Autorizzata VW - Sostituito olio motore, filtro olio, filtro aria e controllo livelli.',
-            photo: null
-          },
-          {
-            id: 'mnt_2',
-            vehicleId: v1Id,
-            title: 'Inversione ed equilibratura gomme',
-            category: 'Gomme',
-            date: formatOffsetDate(-85),
-            km: 52300,
-            cost: 40.00,
-            notes: 'Gommista Bianchi - Pressione impostata a 2.4 bar.',
-            photo: null
-          },
-          {
-            id: 'mnt_3',
-            vehicleId: v1Id,
-            title: 'Sostituzione pastiglie freni anteriori',
-            category: 'Freni',
-            date: formatOffsetDate(-320),
-            km: 39800,
-            cost: 135.00,
-            notes: 'Pastiglie Brembo originali.',
-            photo: null
-          }
-        ]
-      };
     }
 
     function loadDataFromStorage() {
@@ -857,20 +805,17 @@
         const raw = localStorage.getItem(STORAGE_KEY);
         if (raw) {
           const parsed = JSON.parse(raw);
-          if (parsed && Array.isArray(parsed.vehicles) && parsed.vehicles.length > 0) {
-            appState = parsed;
-            if (!appState.activeVehicleId || !appState.vehicles.find(v => v.id === appState.activeVehicleId)) {
-              appState.activeVehicleId = appState.vehicles[0].id;
-            }
-            return;
+          if (parsed && Array.isArray(parsed.vehicles)) {
+            appState = {
+              vehicles: parsed.vehicles || [],
+              deadlines: parsed.deadlines || [],
+              maintenances: parsed.maintenances || []
+            };
           }
         }
       } catch (e) {
         console.error('Errore lettura LocalStorage:', e);
       }
-      // Prima apertura: carica dati demo
-      appState = getSeedDemoData();
-      saveDataToStorage();
     }
 
     function saveDataToStorage() {
@@ -878,205 +823,287 @@
         localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
         updateStorageMeter();
       } catch (e) {
-        showToast('Memoria quasi piena! Riduci le foto o esporta un backup.');
+        showToast('Memoria quasi piena! Esporta un backup.');
       }
     }
 
-    function getActiveVehicle() {
-      return appState.vehicles.find(v => v.id === appState.activeVehicleId) || appState.vehicles[0];
-    }
+    // ---------------------------------------------------------
+    // 3. RENDER SCHERMATA PRINCIPALE: IL MIO GARAGE
+    // ---------------------------------------------------------
+    function renderGarageHome() {
+      const emptyState = document.getElementById('garageEmptyState');
+      const listContainer = document.getElementById('garageVehiclesList');
+      const headerAddBtn = document.getElementById('headerAddCarBtn');
 
-    // ---------------------------------------------------------
-    // 2. RENDERING GENERALE E NAVIGAZIONE TAB
-    // ---------------------------------------------------------
-    function renderAll() {
-      // Banner demo
-      const demoBanner = document.getElementById('demoBanner');
-      if (appState.isDemo) {
-        demoBanner.classList.remove('hidden');
+      if (appState.vehicles.length === 0) {
+        emptyState.classList.remove('hidden');
+        listContainer.classList.add('hidden');
+        headerAddBtn.classList.add('hidden');
       } else {
-        demoBanner.classList.add('hidden');
-      }
+        emptyState.classList.add('hidden');
+        listContainer.classList.remove('hidden');
+        headerAddBtn.classList.remove('hidden');
 
-      renderVehicleSelector();
-      renderDashboard();
-      renderMaintenanceTab();
-      renderGarageTab();
-      updateStorageMeter();
-      lucide.createIcons();
-    }
-
-    function switchTab(tabName) {
-      ['dashboard', 'maintenance', 'garage'].forEach(t => {
-        document.getElementById(`tab-${t}`).classList.add('hidden');
-        const navBtn = document.getElementById(`nav-${t}`);
-        navBtn.classList.remove('text-blue-600', 'dark:text-blue-400');
-        navBtn.classList.add('text-slate-400', 'dark:text-zinc-500');
-      });
-
-      document.getElementById(`tab-${tabName}`).classList.remove('hidden');
-      const activeBtn = document.getElementById(`nav-${tabName}`);
-      activeBtn.classList.remove('text-slate-400', 'dark:text-zinc-500');
-      activeBtn.classList.add('text-blue-600', 'dark:text-blue-400');
-
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      lucide.createIcons();
-    }
-
-    function renderVehicleSelector() {
-      const select = document.getElementById('vehicleSelector');
-      select.innerHTML = appState.vehicles.map(v => `
-        <option value="${v.id}" ${v.id === appState.activeVehicleId ? 'selected' : ''}>
-          ${escapeHtml(v.name)} (${escapeHtml(v.plate.toUpperCase())})
-        </option>
-      `).join('');
-    }
-
-    function switchVehicle(vehicleId) {
-      appState.activeVehicleId = vehicleId;
-      saveDataToStorage();
-      renderAll();
-    }
-
-    // ---------------------------------------------------------
-    // 3. DASHBOARD ("PANORAMICA")
-    // ---------------------------------------------------------
-    function renderDashboard() {
-      const vehicle = getActiveVehicle();
-      if (!vehicle) return;
-
-      // 1. Card Veicolo Attuale con Targa stile Italiana
-      const card = document.getElementById('activeVehicleCard');
-      card.innerHTML = `
-        <div class="flex items-start justify-between gap-3">
-          <div>
-            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 dark:bg-ios-elevatedDark text-slate-600 dark:text-zinc-300 mb-2">
-              Anno ${vehicle.year}
-            </span>
-            <h1 class="text-xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-snug">
-              ${escapeHtml(vehicle.name)}
-            </h1>
-          </div>
-
-          <!-- Targa Italiana Realistica -->
-          <div class="inline-flex items-stretch rounded-lg border-2 border-slate-800 dark:border-zinc-400 overflow-hidden shadow-xs bg-white text-slate-900 shrink-0 select-all">
-            <div class="w-3.5 bg-blue-700 flex flex-col items-center justify-between py-1 text-[7px] font-bold text-white leading-none">
-              <span>••</span>
-              <span>I</span>
-            </div>
-            <div class="px-2.5 py-1 font-mono font-extrabold text-sm tracking-wider uppercase">
-              ${escapeHtml(vehicle.plate)}
-            </div>
-            <div class="w-3 bg-blue-700"></div>
-          </div>
-        </div>
-
-        <div class="mt-5 pt-4 border-t border-slate-100 dark:border-zinc-800 flex items-center justify-between gap-3">
-          <div>
-            <div class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-400">
-              Chilometraggio Attuale
-            </div>
-            <div class="text-2xl font-mono font-extrabold text-slate-900 dark:text-white mt-0.5">
-              ${Number(vehicle.km).toLocaleString('it-IT')} <span class="text-sm font-sans font-semibold text-slate-400">km</span>
-            </div>
-          </div>
-
-          <button onclick="openQuickKmModal()"
-            class="px-4 py-2.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs flex items-center gap-1.5 shadow-sm ios-tap">
-            <i data-lucide="gauge" class="w-4 h-4"></i> + Aggiorna Km
-          </button>
-        </div>
-      `;
-
-      // 2. Scadenze a Semaforo
-      const vehicleDeadlines = appState.deadlines.filter(d => d.vehicleId === vehicle.id);
-      const deadlinesContainer = document.getElementById('deadlinesList');
-
-      if (vehicleDeadlines.length === 0) {
-        deadlinesContainer.innerHTML = `
-          <div class="bg-ios-cardLight dark:bg-ios-cardDark rounded-2xl p-6 text-center border border-slate-200/60 dark:border-zinc-800">
-            <p class="text-sm text-slate-500 dark:text-zinc-400">Nessuna scadenza impostata per questo veicolo.</p>
-            <button onclick="openDeadlineModal()" class="mt-2 text-xs font-bold text-blue-600">+ Aggiungi la prima scadenza</button>
-          </div>
-        `;
-      } else {
-        // Ordina per urgenza (rosso -> giallo -> verde)
-        const evaluated = vehicleDeadlines.map(d => ({ ...d, status: evaluateDeadlineStatus(d, vehicle.km) }));
-        const priorityMap = { red: 0, yellow: 1, green: 2 };
-        evaluated.sort((a, b) => priorityMap[a.status.color] - priorityMap[b.status.color]);
-
-        deadlinesContainer.innerHTML = evaluated.map(item => {
-          const st = item.status;
-          const badgeClasses = {
-            green: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800/60',
-            yellow: 'bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-800/60',
-            red: 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/50 dark:text-red-300 dark:border-red-800/60'
-          }[st.color];
-
-          const dotClasses = {
+        listContainer.innerHTML = appState.vehicles.map(v => {
+          const summary = getVehicleHealthSummary(v);
+          const statusDotColor = {
             green: 'bg-emerald-500',
             yellow: 'bg-amber-500 animate-pulse',
             red: 'bg-red-500 animate-ping'
-          }[st.color];
+          }[summary.worstColor];
 
-          const iconName = {
-            revisione: 'shield-alert',
-            bollo: 'landmark',
-            assicurazione: 'file-check-2',
-            manutenzione: 'wrench'
-          }[item.type] || 'calendar-clock';
+          const statusTextColor = {
+            green: 'text-emerald-700 bg-emerald-50',
+            yellow: 'text-amber-800 bg-amber-50',
+            red: 'text-red-700 bg-red-50'
+          }[summary.worstColor];
 
           return `
-            <div onclick="openDeadlineModal('${item.id}')"
-              class="bg-ios-cardLight dark:bg-ios-cardDark rounded-2xl p-4 border border-slate-200/60 dark:border-zinc-800 shadow-xs flex items-center justify-between gap-3 cursor-pointer ios-tap">
-              <div class="flex items-start gap-3 min-w-0">
-                <div class="w-10 h-10 rounded-xl bg-slate-100 dark:bg-ios-elevatedDark text-slate-700 dark:text-zinc-200 flex items-center justify-center shrink-0 mt-0.5">
-                  <i data-lucide="${iconName}" class="w-5 h-5"></i>
+            <div onclick="openVehicleDetail('${v.id}')"
+              class="bg-white rounded-3xl p-5 shadow-xs border border-slate-200/70 cursor-pointer ios-tap hover:shadow-md transition-shadow">
+              <div class="flex items-center justify-between gap-3">
+                <!-- Avatar Auto Dinamico -->
+                <div class="w-32 h-18 bg-[#F5F6F8] rounded-2xl p-2 flex items-center justify-center shrink-0 border border-slate-100">
+                  ${renderCarSVG(v.bodyType, v.colorId, 'w-full h-full')}
                 </div>
-                <div class="min-w-0">
-                  <div class="font-bold text-sm text-slate-900 dark:text-white truncate">${escapeHtml(item.title)}</div>
-                  <div class="text-xs text-slate-500 dark:text-zinc-400 mt-0.5 space-y-0.5">
-                    ${item.dueDate ? `<div>Scadenza: <strong>${formatDateIT(item.dueDate)}</strong></div>` : ''}
-                    ${item.dueKm ? `<div>Soglia: <strong>${Number(item.dueKm).toLocaleString('it-IT')} km</strong></div>` : ''}
-                    ${item.meta ? `<div class="text-[11px] text-slate-400 truncate">${escapeHtml(item.meta)}</div>` : ''}
+
+                <!-- Info Principali Auto -->
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center justify-between gap-2">
+                    <h2 class="text-base font-extrabold text-slate-900 truncate">${escapeHtml(v.name)}</h2>
+                    <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400 shrink-0"></i>
+                  </div>
+
+                  <!-- Targa stile italiana + Km -->
+                  <div class="flex items-center gap-2.5 mt-1.5 flex-wrap">
+                    <div class="inline-flex items-stretch rounded-md border border-slate-800 overflow-hidden bg-white text-slate-900">
+                      <div class="w-2.5 bg-blue-700"></div>
+                      <span class="px-1.5 py-0.5 font-mono font-bold text-xs uppercase tracking-wider">${escapeHtml(v.plate)}</span>
+                      <div class="w-2 bg-blue-700"></div>
+                    </div>
+
+                    <span class="text-xs font-mono font-semibold text-slate-500">
+                      ${Number(v.km).toLocaleString('it-IT')} km
+                    </span>
+                  </div>
+
+                  <!-- Stato Scadenze Sintetico -->
+                  <div class="mt-2.5">
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold ${statusTextColor}">
+                      <span class="w-1.5 h-1.5 rounded-full ${statusDotColor}"></span>
+                      ${summary.label}
+                    </span>
                   </div>
                 </div>
-              </div>
-
-              <div class="flex flex-col items-end gap-1.5 shrink-0">
-                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border ${badgeClasses}">
-                  <span class="w-2 h-2 rounded-full ${dotClasses}"></span>
-                  ${st.label}
-                </span>
-                <span class="text-[10px] font-semibold text-blue-600 dark:text-blue-400">Rinnova →</span>
               </div>
             </div>
           `;
         }).join('');
       }
-
-      // 3. Ultimi 2 Interventi eseguiti
-      const recentList = document.getElementById('recentMaintenanceList');
-      const vMaint = appState.maintenances
-        .filter(m => m.vehicleId === vehicle.id)
-        .sort((a, b) => new Date(b.date) - new Date(a.date))
-        .slice(0, 2);
-
-      if (vMaint.length === 0) {
-        recentList.innerHTML = `
-          <div class="bg-ios-cardLight dark:bg-ios-cardDark rounded-2xl p-4 text-center border border-slate-200/60 dark:border-zinc-800 text-xs text-slate-500">
-            Nessun intervento registrato finora.
-          </div>
-        `;
-      } else {
-        recentList.innerHTML = vMaint.map(m => renderMaintenanceCardHTML(m, true)).join('');
-      }
+      lucide.createIcons();
     }
 
-    // Calcolo Semaforo (Verde, Giallo entro 30gg o 1.500km, Rosso se scaduta)
+    function getVehicleHealthSummary(vehicle) {
+      const vDeadlines = appState.deadlines.filter(d => d.vehicleId === vehicle.id);
+      if (vDeadlines.length === 0) {
+        return { worstColor: 'green', label: 'Nessuna scadenza impostata' };
+      }
+
+      let redCount = 0;
+      let yellowCount = 0;
+
+      vDeadlines.forEach(d => {
+        const st = evaluateDeadlineStatus(d, vehicle.km);
+        if (st.color === 'red') redCount++;
+        else if (st.color === 'yellow') yellowCount++;
+      });
+
+      if (redCount > 0) {
+        return {
+          worstColor: 'red',
+          label: redCount === 1 ? '1 scadenza superata' : `${redCount} scadenze superate`
+        };
+      }
+      if (yellowCount > 0) {
+        return {
+          worstColor: 'yellow',
+          label: yellowCount === 1 ? '1 scadenza in arrivo' : `${yellowCount} scadenze in arrivo`
+        };
+      }
+      return { worstColor: 'green', label: 'Tutto in regola' };
+    }
+
+    // ---------------------------------------------------------
+    // 4. NAVIGAZIONE TRA GARAGE E DETTAGLIO AUTO
+    // ---------------------------------------------------------
+    function openVehicleDetail(vehicleId) {
+      currentVehicleId = vehicleId;
+      selectedCategoryFilter = 'Tutti';
+      document.getElementById('view-garage').classList.add('hidden');
+      document.getElementById('view-detail').classList.remove('hidden');
+      switchDetailSubTab('overview');
+      renderVehicleDetail();
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    }
+
+    function backToGarage() {
+      currentVehicleId = null;
+      document.getElementById('view-detail').classList.add('hidden');
+      document.getElementById('view-garage').classList.remove('hidden');
+      renderGarageHome();
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    }
+
+    function switchDetailSubTab(tab) {
+      const btnOverview = document.getElementById('subtab-btn-overview');
+      const btnMaint = document.getElementById('subtab-btn-maintenance');
+      const secOverview = document.getElementById('detail-subtab-overview');
+      const secMaint = document.getElementById('detail-subtab-maintenance');
+
+      if (tab === 'overview') {
+        btnOverview.className = 'py-2 rounded-xl text-xs font-bold bg-white text-slate-900 shadow-xs transition-all';
+        btnMaint.className = 'py-2 rounded-xl text-xs font-bold text-slate-500 transition-all';
+        secOverview.classList.remove('hidden');
+        secMaint.classList.add('hidden');
+      } else {
+        btnMaint.className = 'py-2 rounded-xl text-xs font-bold bg-white text-slate-900 shadow-xs transition-all';
+        btnOverview.className = 'py-2 rounded-xl text-xs font-bold text-slate-500 transition-all';
+        secMaint.classList.remove('hidden');
+        secOverview.classList.add('hidden');
+        renderDetailMaintenances();
+      }
+      lucide.createIcons();
+    }
+
+    function getCurrentVehicle() {
+      return appState.vehicles.find(v => v.id === currentVehicleId);
+    }
+
+    function renderVehicleDetail() {
+      const v = getCurrentVehicle();
+      if (!v) return backToGarage();
+
+      // Hero Card con Avatar Grande
+      const hero = document.getElementById('detailHeroCard');
+      hero.innerHTML = `
+        <div class="flex flex-col items-center text-center">
+          <div class="w-52 h-26 bg-[#F5F6F8] rounded-2xl p-3 flex items-center justify-center border border-slate-100 mb-3">
+            ${renderCarSVG(v.bodyType, v.colorId, 'w-full h-full')}
+          </div>
+
+          <h2 class="text-xl font-extrabold text-slate-900 tracking-tight">${escapeHtml(v.name)}</h2>
+
+          <div class="flex items-center justify-center gap-2 mt-2 flex-wrap">
+            <!-- Targa Italiana -->
+            <div class="inline-flex items-stretch rounded-lg border-2 border-slate-800 overflow-hidden bg-white text-slate-900 shadow-2xs">
+              <div class="w-3 bg-blue-700"></div>
+              <span class="px-2.5 py-0.5 font-mono font-extrabold text-xs uppercase tracking-wider">${escapeHtml(v.plate)}</span>
+              <div class="w-2.5 bg-blue-700"></div>
+            </div>
+
+            ${v.year ? `<span class="px-2.5 py-1 rounded-lg bg-[#F5F6F8] text-xs font-semibold text-slate-600">${v.year}</span>` : ''}
+            ${v.fuel ? `<span class="px-2.5 py-1 rounded-lg bg-[#F5F6F8] text-xs font-semibold text-slate-600">${escapeHtml(v.fuel)}</span>` : ''}
+          </div>
+        </div>
+
+        <!-- Barra Chilometraggio Attuale -->
+        <div class="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between gap-3">
+          <div>
+            <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Chilometri Attuali</div>
+            <div class="text-2xl font-mono font-extrabold text-slate-900 mt-0.5">
+              ${Number(v.km).toLocaleString('it-IT')} <span class="text-xs font-sans font-semibold text-slate-400">km</span>
+            </div>
+          </div>
+
+          <button onclick="openQuickKmModal()"
+            class="px-4 py-2.5 rounded-2xl bg-[#007AFF] hover:bg-blue-600 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs ios-tap">
+            <i data-lucide="gauge" class="w-4 h-4"></i> + Aggiorna Km
+          </button>
+        </div>
+      `;
+
+      renderDetailDeadlines();
+      renderDetailMaintenances();
+      lucide.createIcons();
+    }
+
+    // ---------------------------------------------------------
+    // 5. SCADENZE NEL DETTAGLIO VEICOLO
+    // ---------------------------------------------------------
+    function renderDetailDeadlines() {
+      const v = getCurrentVehicle();
+      if (!v) return;
+
+      const list = document.getElementById('detailDeadlinesList');
+      const vDeadlines = appState.deadlines.filter(d => d.vehicleId === v.id);
+
+      if (vDeadlines.length === 0) {
+        list.innerHTML = `
+          <div class="bg-white rounded-2xl p-6 text-center border border-slate-200/60">
+            <p class="text-xs text-slate-500">Nessuna scadenza registrata per quest'auto.</p>
+            <button onclick="openDeadlineModal()" class="mt-2 text-xs font-bold text-[#007AFF]">+ Aggiungi scadenza</button>
+          </div>
+        `;
+        return;
+      }
+
+      const evaluated = vDeadlines.map(d => ({ ...d, status: evaluateDeadlineStatus(d, v.km) }));
+      const priority = { red: 0, yellow: 1, green: 2 };
+      evaluated.sort((a, b) => priority[a.status.color] - priority[b.status.color]);
+
+      list.innerHTML = evaluated.map(item => {
+        const st = item.status;
+        const badgeStyle = {
+          green: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+          yellow: 'bg-amber-50 text-amber-800 border-amber-200',
+          red: 'bg-red-50 text-red-700 border-red-200'
+        }[st.color];
+
+        const dotStyle = {
+          green: 'bg-emerald-500',
+          yellow: 'bg-amber-500 animate-pulse',
+          red: 'bg-red-500 animate-ping'
+        }[st.color];
+
+        const iconName = {
+          revisione: 'shield-check',
+          bollo: 'landmark',
+          assicurazione: 'file-check-2',
+          manutenzione: 'wrench'
+        }[item.type] || 'calendar-clock';
+
+        return `
+          <div onclick="openDeadlineModal('${item.id}')"
+            class="bg-white rounded-2xl p-4 border border-slate-200/60 shadow-2xs flex items-center justify-between gap-3 cursor-pointer ios-tap">
+            <div class="flex items-start gap-3 min-w-0">
+              <div class="w-10 h-10 rounded-xl bg-[#F5F6F8] text-slate-700 flex items-center justify-center shrink-0 mt-0.5">
+                <i data-lucide="${iconName}" class="w-5 h-5"></i>
+              </div>
+              <div class="min-w-0">
+                <div class="font-bold text-sm text-slate-900 truncate">${escapeHtml(item.title)}</div>
+                <div class="text-xs text-slate-500 mt-0.5 space-y-0.5">
+                  ${item.dueDate ? `<div>Data: <strong>${formatDateIT(item.dueDate)}</strong></div>` : ''}
+                  ${item.dueKm ? `<div>Soglia: <strong class="font-mono">${Number(item.dueKm).toLocaleString('it-IT')} km</strong></div>` : ''}
+                  ${item.meta ? `<div class="text-[11px] text-slate-400 truncate">${escapeHtml(item.meta)}</div>` : ''}
+                </div>
+              </div>
+            </div>
+
+            <div class="flex flex-col items-end gap-1.5 shrink-0">
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border ${badgeStyle}">
+                <span class="w-1.5 h-1.5 rounded-full ${dotStyle}"></span>
+                ${st.label}
+              </span>
+              <span class="text-[10px] font-bold text-[#007AFF]">Rinnova →</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
     function evaluateDeadlineStatus(deadline, currentKm) {
       let color = 'green';
-      let messages = [];
+      let parts = [];
 
       const today = new Date();
       today.setHours(0, 0, 0, 0);
@@ -1088,15 +1115,15 @@
 
         if (diffDays < 0) {
           color = 'red';
-          messages.push(`Scaduta da ${Math.abs(diffDays)} gg`);
+          parts.push(`Scaduta da ${Math.abs(diffDays)} gg`);
         } else if (diffDays === 0) {
           color = 'red';
-          messages.push('Scade oggi!');
+          parts.push('Scade oggi!');
         } else if (diffDays <= 30) {
           if (color !== 'red') color = 'yellow';
-          messages.push(`Tra ${diffDays} gg`);
+          parts.push(`Tra ${diffDays} gg`);
         } else {
-          messages.push(`Tra ${diffDays} gg`);
+          parts.push(`Tra ${diffDays} gg`);
         }
       }
 
@@ -1104,242 +1131,307 @@
         const diffKm = Number(deadline.dueKm) - Number(currentKm);
         if (diffKm <= 0) {
           color = 'red';
-          messages.push(`Superata di ${Math.abs(diffKm).toLocaleString('it-IT')} km`);
+          parts.push(`Superata di ${Math.abs(diffKm).toLocaleString('it-IT')} km`);
         } else if (diffKm <= 1500) {
           if (color !== 'red') color = 'yellow';
-          messages.push(`-${diffKm.toLocaleString('it-IT')} km`);
+          parts.push(`-${diffKm.toLocaleString('it-IT')} km`);
         } else if (!deadline.dueDate) {
-          messages.push(`-${diffKm.toLocaleString('it-IT')} km`);
+          parts.push(`-${diffKm.toLocaleString('it-IT')} km`);
         }
       }
 
-      return {
-        color,
-        label: messages.join(' • ') || 'Attiva'
-      };
+      return { color, label: parts.join(' • ') || 'Attiva' };
     }
 
     // ---------------------------------------------------------
-    // 4. SEZIONE MANUTENZIONI
+    // 6. MANUTENZIONI NEL DETTAGLIO VEICOLO
     // ---------------------------------------------------------
-    const CATEGORIES = ['Tutti', 'Tagliando/Olio', 'Gomme', 'Freni', 'Batteria/Elettronica', 'Carrozzeria', 'Altro'];
+    const MAINT_CATEGORIES = ['Tutti', 'Tagliando', 'Gomme', 'Freni', 'Altro'];
 
-    function renderMaintenanceTab() {
+    function renderDetailMaintenances() {
+      const v = getCurrentVehicle();
+      if (!v) return;
+
       // Render filtri categoria
-      const filtersContainer = document.getElementById('categoryFilters');
-      filtersContainer.innerHTML = CATEGORIES.map(cat => {
+      const filtersEl = document.getElementById('detailCategoryFilters');
+      filtersEl.innerHTML = MAINT_CATEGORIES.map(cat => {
         const active = cat === selectedCategoryFilter;
         return `
-          <button onclick="setCategoryFilter('${cat}')"
-            class="px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors ios-tap ${
-              active
-                ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xs'
-                : 'bg-ios-cardLight dark:bg-ios-cardDark text-slate-600 dark:text-zinc-300 border border-slate-200/70 dark:border-zinc-800'
+          <button onclick="setMaintFilter('${cat}')"
+            class="px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-colors ios-tap ${
+              active ? 'bg-slate-900 text-white' : 'bg-white text-slate-600 border border-slate-200/80'
             }">
             ${cat}
           </button>
         `;
       }).join('');
 
-      renderMaintenanceList();
-    }
-
-    function setCategoryFilter(cat) {
-      selectedCategoryFilter = cat;
-      renderMaintenanceTab();
-      lucide.createIcons();
-    }
-
-    function renderMaintenanceList() {
-      const vehicle = getActiveVehicle();
-      if (!vehicle) return;
-
-      const searchQuery = (document.getElementById('maintenanceSearch').value || '').toLowerCase().trim();
-      const vMaint = appState.maintenances.filter(m => m.vehicleId === vehicle.id);
-
-      // Calcolo totali spese
+      const vMaint = appState.maintenances.filter(m => m.vehicleId === v.id);
       const currentYear = new Date().getFullYear();
-      document.getElementById('currentYearLabel').textContent = currentYear;
+      document.getElementById('detailYearLabel').textContent = currentYear;
 
-      const yearTotal = vMaint
+      const yearSum = vMaint
         .filter(m => new Date(m.date).getFullYear() === currentYear)
-        .reduce((acc, m) => acc + (parseFloat(m.cost) || 0), 0);
+        .reduce((sum, m) => sum + (parseFloat(m.cost) || 0), 0);
+      const allSum = vMaint.reduce((sum, m) => sum + (parseFloat(m.cost) || 0), 0);
 
-      const allTotal = vMaint.reduce((acc, m) => acc + (parseFloat(m.cost) || 0), 0);
+      document.getElementById('detailYearTotal').textContent = `€ ${yearSum.toLocaleString('it-IT', { maximumFractionDigits: 2 })}`;
+      document.getElementById('detailAllTimeTotal').textContent = `€ ${allSum.toLocaleString('it-IT', { maximumFractionDigits: 2 })}`;
 
-      document.getElementById('yearExpensesTotal').textContent = `€ ${yearTotal.toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
-      document.getElementById('allTimeExpensesTotal').textContent = `€ ${allTotal.toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
-
-      // Filtraggio
+      const query = (document.getElementById('maintenanceSearchInput').value || '').toLowerCase().trim();
       const filtered = vMaint
         .filter(m => selectedCategoryFilter === 'Tutti' || m.category === selectedCategoryFilter)
-        .filter(m => !searchQuery || m.title.toLowerCase().includes(searchQuery) || (m.notes && m.notes.toLowerCase().includes(searchQuery)))
+        .filter(m => !query || m.title.toLowerCase().includes(query) || (m.notes && m.notes.toLowerCase().includes(query)))
         .sort((a, b) => new Date(b.date) - new Date(a.date));
 
-      const listContainer = document.getElementById('maintenanceFullList');
+      const listEl = document.getElementById('detailMaintenanceList');
       if (filtered.length === 0) {
-        listContainer.innerHTML = `
-          <div class="bg-ios-cardLight dark:bg-ios-cardDark rounded-3xl p-8 text-center border border-slate-200/60 dark:border-zinc-800 space-y-2">
-            <div class="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-ios-elevatedDark text-slate-400 mx-auto flex items-center justify-center">
-              <i data-lucide="wrench" class="w-6 h-6"></i>
+        listEl.innerHTML = `
+          <div class="bg-white rounded-3xl p-8 text-center border border-slate-200/60 space-y-2">
+            <div class="w-11 h-11 rounded-2xl bg-[#F5F6F8] text-slate-400 mx-auto flex items-center justify-center">
+              <i data-lucide="wrench" class="w-5 h-5"></i>
             </div>
-            <p class="text-sm font-semibold text-slate-700 dark:text-zinc-200">Nessun intervento trovato</p>
-            <p class="text-xs text-slate-500 dark:text-zinc-400">Registra un tagliando, un cambio gomme o qualsiasi lavoro eseguito.</p>
+            <p class="text-sm font-bold text-slate-800">Nessun intervento registrato</p>
+            <p class="text-xs text-slate-500">Tocca "+ Intervento" per annotare tagliandi, gomme o riparazioni.</p>
           </div>
         `;
       } else {
-        listContainer.innerHTML = filtered.map(m => renderMaintenanceCardHTML(m, false)).join('');
+        listEl.innerHTML = filtered.map(m => `
+          <div class="bg-white rounded-2xl p-4 border border-slate-200/60 shadow-2xs space-y-2">
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span class="px-2 py-0.5 rounded-md bg-blue-50 text-[#007AFF] text-[10px] font-bold">${escapeHtml(m.category)}</span>
+                  <span class="text-xs text-slate-400 font-medium">${formatDateIT(m.date)} • <strong class="font-mono text-slate-600">${Number(m.km).toLocaleString('it-IT')} km</strong></span>
+                </div>
+                <h4 class="font-bold text-sm text-slate-900 mt-1">${escapeHtml(m.title)}</h4>
+              </div>
+
+              <div class="text-right shrink-0">
+                ${m.cost ? `<div class="font-mono font-extrabold text-sm text-slate-900">€ ${parseFloat(m.cost).toLocaleString('it-IT', { minimumFractionDigits: 2 })}</div>` : ''}
+                <div class="flex items-center justify-end gap-1 mt-1">
+                  <button onclick="openMaintenanceModal('${m.id}')" class="p-1.5 rounded-lg text-slate-400 hover:text-[#007AFF] hover:bg-slate-100">
+                    <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+                  </button>
+                  <button onclick="confirmDeleteMaintenance('${m.id}')" class="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-slate-100">
+                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            ${m.notes ? `<p class="text-xs text-slate-500 bg-[#F5F6F8] p-2.5 rounded-xl leading-relaxed">${escapeHtml(m.notes)}</p>` : ''}
+
+            ${m.photo ? `
+              <div>
+                <button onclick="viewPhoto('${m.photo}')" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#F5F6F8] text-xs font-bold text-slate-700 ios-tap">
+                  <i data-lucide="image" class="w-3.5 h-3.5 text-[#007AFF]"></i> Vedi foto ricevuta
+                </button>
+              </div>
+            ` : ''}
+          </div>
+        `).join('');
       }
       lucide.createIcons();
     }
 
-    function renderMaintenanceCardHTML(m, compact = false) {
-      return `
-        <div class="bg-ios-cardLight dark:bg-ios-cardDark rounded-2xl p-4 border border-slate-200/60 dark:border-zinc-800 shadow-xs space-y-2.5">
-          <div class="flex items-start justify-between gap-3">
-            <div class="min-w-0">
-              <div class="flex items-center gap-2 flex-wrap">
-                <span class="px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 text-[10px] font-bold">
-                  ${escapeHtml(m.category)}
-                </span>
-                <span class="text-xs text-slate-400 dark:text-zinc-400 font-medium">
-                  ${formatDateIT(m.date)} • <strong class="font-mono text-slate-600 dark:text-zinc-300">${Number(m.km).toLocaleString('it-IT')} km</strong>
-                </span>
-              </div>
-              <h4 class="font-bold text-sm text-slate-900 dark:text-white mt-1 leading-snug">
-                ${escapeHtml(m.title)}
-              </h4>
-            </div>
-
-            <div class="text-right shrink-0">
-              ${m.cost ? `<div class="font-mono font-extrabold text-sm text-slate-900 dark:text-white">€ ${parseFloat(m.cost).toLocaleString('it-IT', { minimumFractionDigits: 2 })}</div>` : ''}
-              ${!compact ? `
-                <div class="flex items-center justify-end gap-1 mt-1">
-                  <button onclick="openMaintenanceModal('${m.id}')" class="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-slate-100 dark:hover:bg-ios-elevatedDark" title="Modifica">
-                    <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
-                  </button>
-                  <button onclick="confirmDeleteMaintenance('${m.id}')" class="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-slate-100 dark:hover:bg-ios-elevatedDark" title="Elimina">
-                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                  </button>
-                </div>
-              ` : ''}
-            </div>
-          </div>
-
-          ${m.notes ? `<p class="text-xs text-slate-500 dark:text-zinc-400 leading-relaxed bg-slate-50 dark:bg-ios-elevatedDark/50 p-2.5 rounded-xl">${escapeHtml(m.notes)}</p>` : ''}
-
-          ${m.photo ? `
-            <div class="pt-1">
-              <button onclick="viewPhoto('${m.photo}')" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-ios-elevatedDark text-xs font-semibold text-slate-700 dark:text-zinc-200 ios-tap">
-                <i data-lucide="image" class="w-3.5 h-3.5 text-blue-500"></i> Vedi fattura / ricevuta allegata
-              </button>
-            </div>
-          ` : ''}
-        </div>
-      `;
+    function setMaintFilter(cat) {
+      selectedCategoryFilter = cat;
+      renderDetailMaintenances();
     }
 
     // ---------------------------------------------------------
-    // 5. SEZIONE VEICOLI & BACKUP
+    // 7. CONFIGURATORE AGGIUNGI / MODIFICA AUTO
     // ---------------------------------------------------------
-    function renderGarageTab() {
-      const container = document.getElementById('vehiclesGarageList');
-      container.innerHTML = appState.vehicles.map(v => {
-        const isCurrent = v.id === appState.activeVehicleId;
-        const mCount = appState.maintenances.filter(m => m.vehicleId === v.id).length;
+    function openVehicleModal(editId = null) {
+      document.getElementById('vehicleForm').reset();
+      const delBtn = document.getElementById('deleteVehicleBtn');
+      userManuallyPickedColor = false;
 
+      if (editId) {
+        const v = appState.vehicles.find(item => item.id === editId);
+        if (!v) return;
+        document.getElementById('vehicleModalTitle').textContent = 'Modifica Auto';
+        document.getElementById('vId').value = v.id;
+        document.getElementById('vName').value = v.name;
+        document.getElementById('vPlate').value = v.plate;
+        document.getElementById('vKm').value = v.km;
+        document.getElementById('vYear').value = v.year || '';
+        document.getElementById('vFuel').value = v.fuel || 'Benzina';
+        selectedBodyType = v.bodyType || 'sandero';
+        selectedColorId = v.colorId || 'white';
+        userManuallyPickedColor = true;
+        delBtn.classList.remove('hidden');
+      } else {
+        document.getElementById('vehicleModalTitle').textContent = 'Aggiungi Auto';
+        document.getElementById('vId').value = '';
+        document.getElementById('vYear').value = new Date().getFullYear();
+        selectedBodyType = 'sandero';
+        selectedColorId = 'white';
+        delBtn.classList.add('hidden');
+      }
+
+      renderVehicleConfiguratorUI();
+      openModal('vehicleModal');
+    }
+
+    function handleModelNameAutoDetect(rawValue) {
+      const val = (rawValue || '').toLowerCase();
+      let detectedType = null;
+
+      if (val.includes('sandero') || val.includes('dacia')) {
+        detectedType = 'sandero';
+      } else if (val.includes('kadjar') || val.includes('renault')) {
+        detectedType = 'kadjar';
+      } else if (val.includes('panda') || val.includes('500') || val.includes('yaris') || val.includes('clio')) {
+        detectedType = 'citycar';
+      } else if (val.includes('suv') || val.includes('tucson') || val.includes('tiguan') || val.includes('qashqai')) {
+        detectedType = 'suv';
+      } else if (val.includes('sw') || val.includes('wagon') || val.includes('touring') || val.includes('avant')) {
+        detectedType = 'sw';
+      }
+
+      if (detectedType && detectedType !== selectedBodyType) {
+        selectedBodyType = detectedType;
+        if (!userManuallyPickedColor) {
+          const preset = BODY_TYPES.find(b => b.id === detectedType);
+          if (preset && preset.defaultColor) {
+            selectedColorId = preset.defaultColor;
+          }
+        }
+        renderVehicleConfiguratorUI();
+      }
+    }
+
+    function editCurrentVehicle() {
+      if (currentVehicleId) openVehicleModal(currentVehicleId);
+    }
+
+    function renderVehicleConfiguratorUI() {
+      // Anteprima grande
+      document.getElementById('liveCarAvatarPreview').innerHTML = renderCarSVG(selectedBodyType, selectedColorId, 'w-52 h-24');
+
+      // Griglia carrozzerie (4 colonne compatte su schermi medi, 2/3 su mobile)
+      const bodyContainer = document.getElementById('bodyTypeSelector');
+      bodyContainer.className = 'grid grid-cols-2 sm:grid-cols-4 gap-2';
+      bodyContainer.innerHTML = BODY_TYPES.map(b => {
+        const isSelected = b.id === selectedBodyType;
         return `
-          <div class="bg-ios-cardLight dark:bg-ios-cardDark rounded-2xl p-4 border ${isCurrent ? 'border-blue-500 ring-1 ring-blue-500/30' : 'border-slate-200/60 dark:border-zinc-800'} shadow-xs flex items-center justify-between gap-3">
-            <div onclick="switchVehicle('${v.id}')" class="min-w-0 flex-1 cursor-pointer">
-              <div class="flex items-center gap-2">
-                <span class="font-bold text-sm text-slate-900 dark:text-white truncate">${escapeHtml(v.name)}</span>
-                ${isCurrent ? '<span class="px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-600 dark:text-blue-400 text-[10px] font-bold">Attivo</span>' : ''}
-              </div>
-              <div class="text-xs text-slate-500 dark:text-zinc-400 mt-1 flex items-center gap-2">
-                <span class="font-mono font-bold uppercase px-1.5 py-0.5 rounded bg-slate-100 dark:bg-ios-elevatedDark text-slate-700 dark:text-zinc-200">${escapeHtml(v.plate)}</span>
-                <span>• ${Number(v.km).toLocaleString('it-IT')} km</span>
-                <span>• ${mCount} interventi</span>
-              </div>
-            </div>
+          <button type="button" onclick="selectBodyType('${b.id}')"
+            class="p-2 rounded-2xl border text-center flex flex-col items-center gap-1 transition-all ios-tap ${
+              isSelected
+                ? 'bg-blue-50/70 border-[#007AFF] ring-1 ring-[#007AFF]'
+                : 'bg-[#F5F6F8] border-slate-200/70 opacity-85 hover:opacity-100'
+            }">
+            ${renderCarSVG(b.id, selectedColorId, 'w-20 h-9')}
+            <span class="text-[11px] font-bold leading-tight ${isSelected ? 'text-[#007AFF]' : 'text-slate-600'}">${b.label}</span>
+          </button>
+        `;
+      }).join('');
 
-            <div class="flex items-center gap-1 shrink-0">
-              <button onclick="openVehicleModal('${v.id}')" class="p-2 rounded-xl bg-slate-100 dark:bg-ios-elevatedDark text-slate-600 dark:text-zinc-300 ios-tap" title="Modifica veicolo">
-                <i data-lucide="pencil" class="w-4 h-4"></i>
-              </button>
-              ${appState.vehicles.length > 1 ? `
-                <button onclick="confirmDeleteVehicle('${v.id}')" class="p-2 rounded-xl bg-red-50 dark:bg-red-950/40 text-red-600 ios-tap" title="Elimina veicolo">
-                  <i data-lucide="trash-2" class="w-4 h-4"></i>
-                </button>
-              ` : ''}
-            </div>
-          </div>
+      // Swatches colori
+      const colorContainer = document.getElementById('colorSwatchSelector');
+      colorContainer.innerHTML = CAR_COLORS.map(c => {
+        const isSelected = c.id === selectedColorId;
+        return `
+          <button type="button" onclick="selectCarColor('${c.id}')" title="${c.label}"
+            class="w-7 h-7 rounded-full border-2 flex items-center justify-center transition-transform ios-tap ${
+              isSelected ? 'scale-115 ring-2 ring-offset-2 ring-[#007AFF]' : 'border-slate-300'
+            }"
+            style="background-color: ${c.hex};">
+            ${isSelected ? `<span class="w-2 h-2 rounded-full ${c.id === 'white' || c.id === 'silver' ? 'bg-slate-800' : 'bg-white'}"></span>` : ''}
+          </button>
         `;
       }).join('');
     }
 
-    function updateStorageMeter() {
-      const dataStr = localStorage.getItem(STORAGE_KEY) || '';
-      const bytes = new Blob([dataStr]).size;
-      const kb = (bytes / 1024).toFixed(1);
-      const maxBytes = 5 * 1024 * 1024; // ~5MB limite standard Safari LocalStorage
-      const percent = Math.min(100, Math.max(2, Math.round((bytes / maxBytes) * 100)));
-
-      document.getElementById('storageUsageText').textContent = `${kb} KB / 5.0 MB`;
-      const bar = document.getElementById('storageUsageBar');
-      bar.style.width = `${percent}%`;
-      bar.className = `h-full rounded-full transition-all duration-300 ${percent > 80 ? 'bg-red-500' : percent > 50 ? 'bg-amber-500' : 'bg-blue-600'}`;
-    }
-
-    function exportBackupJSON() {
-      const dateStr = new Date().toISOString().split('T')[0];
-      const fileName = `libretto-auto-backup-${dateStr}.json`;
-      const jsonStr = JSON.stringify(appState, null, 2);
-      const blob = new Blob([jsonStr], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = fileName;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-
-      showToast('Backup JSON scaricato!');
-    }
-
-    function importBackupJSON(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        try {
-          const imported = JSON.parse(e.target.result);
-          if (!imported || !Array.isArray(imported.vehicles) || imported.vehicles.length === 0) {
-            showToast('File di backup non valido.');
-            return;
-          }
-          appState = {
-            activeVehicleId: imported.activeVehicleId || imported.vehicles[0].id,
-            isDemo: false,
-            vehicles: imported.vehicles,
-            deadlines: imported.deadlines || [],
-            maintenances: imported.maintenances || []
-          };
-          saveDataToStorage();
-          renderAll();
-          showToast('Backup ripristinato con successo!');
-        } catch (err) {
-          showToast('Errore durante la lettura del file JSON.');
+    function selectBodyType(bodyId) {
+      selectedBodyType = bodyId;
+      if (!userManuallyPickedColor) {
+        const preset = BODY_TYPES.find(b => b.id === bodyId);
+        if (preset && preset.defaultColor) {
+          selectedColorId = preset.defaultColor;
         }
-        event.target.value = '';
-      };
-      reader.readAsText(file);
+      }
+      renderVehicleConfiguratorUI();
+    }
+
+    function selectCarColor(colorId) {
+      userManuallyPickedColor = true;
+      selectedColorId = colorId;
+      renderVehicleConfiguratorUI();
+    }
+
+    function saveVehicle(event) {
+      event.preventDefault();
+      const id = document.getElementById('vId').value;
+      const name = document.getElementById('vName').value.trim();
+      const plate = document.getElementById('vPlate').value.trim().toUpperCase();
+      const km = parseInt(document.getElementById('vKm').value, 10) || 0;
+      const year = document.getElementById('vYear').value ? parseInt(document.getElementById('vYear').value, 10) : null;
+      const fuel = document.getElementById('vFuel').value;
+
+      if (id) {
+        const idx = appState.vehicles.findIndex(v => v.id === id);
+        if (idx !== -1) {
+          appState.vehicles[idx] = {
+            ...appState.vehicles[idx],
+            name, plate, km, year, fuel,
+            bodyType: selectedBodyType,
+            colorId: selectedColorId
+          };
+        }
+        saveDataToStorage();
+        closeModal('vehicleModal');
+        renderVehicleDetail();
+        showToast('Dati auto aggiornati!');
+      } else {
+        const newId = 'veh_' + Date.now();
+        appState.vehicles.push({
+          id: newId,
+          name, plate, km, year, fuel,
+          bodyType: selectedBodyType,
+          colorId: selectedColorId
+        });
+
+        // Pre-popola le 3 scadenze amministrative italiane base pronte da personalizzare
+        const nextYear = new Date();
+        nextYear.setFullYear(nextYear.getFullYear() + 1);
+        const nextYearStr = nextYear.toISOString().split('T')[0];
+
+        appState.deadlines.push(
+          { id: 'dl_' + Date.now() + '_1', vehicleId: newId, title: 'Revisione Ministeriale', type: 'revisione', dueDate: nextYearStr, dueKm: null, meta: 'Imposta data esatta' },
+          { id: 'dl_' + Date.now() + '_2', vehicleId: newId, title: 'Assicurazione RCA', type: 'assicurazione', dueDate: nextYearStr, dueKm: null, meta: 'Imposta scadenza polizza' },
+          { id: 'dl_' + Date.now() + '_3', vehicleId: newId, title: 'Bollo Auto', type: 'bollo', dueDate: nextYearStr, dueKm: null, meta: 'Imposta scadenza regionale' }
+        );
+
+        saveDataToStorage();
+        closeModal('vehicleModal');
+        renderGarageHome();
+        showToast('Auto aggiunta al garage!');
+      }
+    }
+
+    function confirmDeleteCurrentVehicle() {
+      const v = getCurrentVehicle();
+      if (!v) return;
+      openConfirmDialog(
+        `Eliminare ${v.name}?`,
+        'Verranno rimossi definitivamente anche tutti gli interventi e le scadenze collegati a questa auto.',
+        () => {
+          appState.vehicles = appState.vehicles.filter(item => item.id !== v.id);
+          appState.deadlines = appState.deadlines.filter(d => d.vehicleId !== v.id);
+          appState.maintenances = appState.maintenances.filter(m => m.vehicleId !== v.id);
+          saveDataToStorage();
+          closeModal('vehicleModal');
+          backToGarage();
+          showToast('Auto rimossa dal garage.');
+        }
+      );
     }
 
     // ---------------------------------------------------------
-    // 6. AZIONI E MODALI (KM, MANUTENZIONI, SCADENZE, VEICOLI)
+    // 8. AZIONI MODALI SECONDARIE (KM, SCADENZE, MANUTENZIONI)
     // ---------------------------------------------------------
     function openModal(id) {
       document.getElementById(id).classList.remove('hidden');
@@ -1350,10 +1442,10 @@
       document.getElementById(id).classList.add('hidden');
     }
 
-    // --- Aggiornamento Rapido Km ---
     function openQuickKmModal() {
-      const vehicle = getActiveVehicle();
-      document.getElementById('quickKmInput').value = vehicle.km;
+      const v = getCurrentVehicle();
+      if (!v) return;
+      document.getElementById('quickKmInput').value = v.km;
       openModal('updateKmModal');
     }
 
@@ -1363,200 +1455,17 @@
     }
 
     function saveQuickKm() {
-      const vehicle = getActiveVehicle();
+      const v = getCurrentVehicle();
       const newKm = parseInt(document.getElementById('quickKmInput').value, 10);
-      if (isNaN(newKm) || newKm < 0) {
-        showToast('Inserisci un chilometraggio valido.');
-        return;
-      }
-      vehicle.km = newKm;
+      if (isNaN(newKm) || newKm < 0) return;
+      v.km = newKm;
       saveDataToStorage();
       closeModal('updateKmModal');
-      renderAll();
-      showToast('Chilometraggio aggiornato!');
+      renderVehicleDetail();
+      showToast('Chilometri aggiornati!');
     }
 
-    // --- Interventi di Manutenzione ---
-    function openMaintenanceModal(editId = null) {
-      const vehicle = getActiveVehicle();
-      document.getElementById('maintenanceForm').reset();
-      currentUploadedPhotoBase64 = null;
-      document.getElementById('photoPreviewContainer').classList.add('hidden');
-      document.getElementById('photoUploadLabel').textContent = 'Scatta o scegli foto';
-      document.getElementById('reminderFields').classList.add('hidden');
-
-      if (editId) {
-        const m = appState.maintenances.find(item => item.id === editId);
-        if (!m) return;
-        document.getElementById('maintenanceModalTitle').textContent = 'Modifica Intervento';
-        document.getElementById('mId').value = m.id;
-        document.getElementById('mTitle').value = m.title;
-        document.getElementById('mCategory').value = m.category;
-        document.getElementById('mDate').value = m.date;
-        document.getElementById('mKm').value = m.km;
-        document.getElementById('mCost').value = m.cost || '';
-        document.getElementById('mNotes').value = m.notes || '';
-        if (m.photo) {
-          currentUploadedPhotoBase64 = m.photo;
-          document.getElementById('mPhotoPreview').src = m.photo;
-          document.getElementById('photoPreviewContainer').classList.remove('hidden');
-          document.getElementById('photoUploadLabel').textContent = 'Sostituisci foto';
-        }
-      } else {
-        document.getElementById('maintenanceModalTitle').textContent = 'Registra Intervento';
-        document.getElementById('mId').value = '';
-        document.getElementById('mDate').value = new Date().toISOString().split('T')[0];
-        document.getElementById('mKm').value = vehicle.km;
-      }
-
-      openModal('maintenanceModal');
-    }
-
-    function fillMaintenancePreset(title, category) {
-      document.getElementById('mTitle').value = title;
-      document.getElementById('mCategory').value = category;
-    }
-
-    function toggleReminderFields() {
-      const checked = document.getElementById('mSetReminder').checked;
-      const box = document.getElementById('reminderFields');
-      if (checked) {
-        box.classList.remove('hidden');
-      } else {
-        box.classList.add('hidden');
-      }
-    }
-
-    // Compressione lato client su Canvas prima di salvare in LocalStorage
-    function handlePhotoUpload(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        const img = new Image();
-        img.onload = function() {
-          const canvas = document.createElement('canvas');
-          const MAX_DIM = 900; // Ottimo compromesso leggibilità fattura / peso KB
-          let width = img.width;
-          let height = img.height;
-
-          if (width > height && width > MAX_DIM) {
-            height *= MAX_DIM / width;
-            width = MAX_DIM;
-          } else if (height > MAX_DIM) {
-            width *= MAX_DIM / height;
-            height = MAX_DIM;
-          }
-
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0, width, height);
-
-          currentUploadedPhotoBase64 = canvas.toDataURL('image/jpeg', 0.65);
-          document.getElementById('mPhotoPreview').src = currentUploadedPhotoBase64;
-          document.getElementById('photoPreviewContainer').classList.remove('hidden');
-          document.getElementById('photoUploadLabel').textContent = 'Foto pronta';
-        };
-        img.src = e.target.result;
-      };
-      reader.readAsDataURL(file);
-    }
-
-    function removeUploadedPhoto() {
-      currentUploadedPhotoBase64 = null;
-      document.getElementById('mPhotoInput').value = '';
-      document.getElementById('photoPreviewContainer').classList.add('hidden');
-      document.getElementById('photoUploadLabel').textContent = 'Scatta o scegli foto';
-    }
-
-    function viewPhoto(src) {
-      document.getElementById('lightboxImg').src = src;
-      openModal('photoViewerModal');
-    }
-
-    function saveMaintenance(event) {
-      event.preventDefault();
-      const vehicle = getActiveVehicle();
-      const id = document.getElementById('mId').value;
-      const title = document.getElementById('mTitle').value.trim();
-      const category = document.getElementById('mCategory').value;
-      const date = document.getElementById('mDate').value;
-      const km = parseInt(document.getElementById('mKm').value, 10) || 0;
-      const cost = document.getElementById('mCost').value ? parseFloat(document.getElementById('mCost').value) : null;
-      const notes = document.getElementById('mNotes').value.trim();
-
-      if (id) {
-        const idx = appState.maintenances.findIndex(m => m.id === id);
-        if (idx !== -1) {
-          appState.maintenances[idx] = {
-            ...appState.maintenances[idx],
-            title, category, date, km, cost, notes,
-            photo: currentUploadedPhotoBase64
-          };
-        }
-      } else {
-        appState.maintenances.push({
-          id: 'mnt_' + Date.now(),
-          vehicleId: vehicle.id,
-          title, category, date, km, cost, notes,
-          photo: currentUploadedPhotoBase64
-        });
-      }
-
-      // Aggiorna chilometraggio veicolo se l'intervento ha km maggiori
-      if (km > vehicle.km) {
-        vehicle.km = km;
-      }
-
-      // Creazione automatica promemoria se richiesto
-      if (document.getElementById('mSetReminder').checked) {
-        const remKm = parseInt(document.getElementById('mReminderKm').value, 10) || 0;
-        const remMonths = parseInt(document.getElementById('mReminderMonths').value, 10) || 0;
-
-        if (remKm > 0 || remMonths > 0) {
-          let dueDate = null;
-          if (remMonths > 0) {
-            const d = new Date(date);
-            d.setMonth(d.getMonth() + remMonths);
-            dueDate = d.toISOString().split('T')[0];
-          }
-          const dueKm = remKm > 0 ? km + remKm : null;
-
-          appState.deadlines.push({
-            id: 'dl_' + Date.now(),
-            vehicleId: vehicle.id,
-            title: `Prossimo: ${title}`,
-            type: 'manutenzione',
-            dueDate,
-            dueKm,
-            meta: `Da intervento del ${formatDateIT(date)}`
-          });
-        }
-      }
-
-      appState.isDemo = false;
-      saveDataToStorage();
-      closeModal('maintenanceModal');
-      renderAll();
-      showToast('Intervento salvato!');
-    }
-
-    function confirmDeleteMaintenance(id) {
-      openConfirmDialog(
-        'Eliminare intervento?',
-        'Questa voce verrà rimossa definitivamente dallo storico del veicolo.',
-        () => {
-          appState.maintenances = appState.maintenances.filter(m => m.id !== id);
-          saveDataToStorage();
-          renderAll();
-          showToast('Intervento eliminato.');
-        }
-      );
-    }
-
-    // --- Scadenze ---
+    // Scadenze
     function openDeadlineModal(editId = null) {
       document.getElementById('deadlineForm').reset();
       const quickBox = document.getElementById('quickRenewBox');
@@ -1580,35 +1489,33 @@
         quickBox.classList.add('hidden');
         delBtn.classList.add('hidden');
       }
-
       openModal('deadlineModal');
     }
 
     function quickRenewDeadline(addMonths, addKm) {
-      const vehicle = getActiveVehicle();
+      const v = getCurrentVehicle();
       const dateInput = document.getElementById('dDueDate');
       const kmInput = document.getElementById('dDueKm');
 
       if (addMonths > 0) {
-        const baseDate = dateInput.value ? new Date(dateInput.value) : new Date();
-        // Se la data era molto vecchia, parti da oggi
+        const base = dateInput.value ? new Date(dateInput.value) : new Date();
         const now = new Date();
-        const refDate = baseDate < now ? now : baseDate;
-        refDate.setMonth(refDate.getMonth() + addMonths);
-        dateInput.value = refDate.toISOString().split('T')[0];
+        const ref = base < now ? now : base;
+        ref.setMonth(ref.getMonth() + addMonths);
+        dateInput.value = ref.toISOString().split('T')[0];
       }
-
-      if (addKm > 0) {
-        const baseKm = Math.max(Number(vehicle.km), parseInt(kmInput.value, 10) || 0);
+      if (addKm > 0 && v) {
+        const baseKm = Math.max(Number(v.km), parseInt(kmInput.value, 10) || 0);
         kmInput.value = baseKm + addKm;
       }
-
-      showToast('Nuova scadenza calcolata! Premi Salva.');
+      showToast('Nuova data calcolata! Premi Salva.');
     }
 
     function saveDeadline(event) {
       event.preventDefault();
-      const vehicle = getActiveVehicle();
+      const v = getCurrentVehicle();
+      if (!v) return;
+
       const id = document.getElementById('dId').value;
       const title = document.getElementById('dTitle').value.trim();
       const type = document.getElementById('dType').value;
@@ -1617,26 +1524,24 @@
       const meta = document.getElementById('dMeta').value.trim();
 
       if (!dueDate && !dueKm) {
-        showToast('Inserisci almeno una data o una soglia km.');
+        showToast('Inserisci una data o una soglia km.');
         return;
       }
 
       if (id) {
         const idx = appState.deadlines.findIndex(d => d.id === id);
-        if (idx !== -1) {
-          appState.deadlines[idx] = { ...appState.deadlines[idx], title, type, dueDate, dueKm, meta };
-        }
+        if (idx !== -1) appState.deadlines[idx] = { ...appState.deadlines[idx], title, type, dueDate, dueKm, meta };
       } else {
         appState.deadlines.push({
           id: 'dl_' + Date.now(),
-          vehicleId: vehicle.id,
+          vehicleId: v.id,
           title, type, dueDate, dueKm, meta
         });
       }
 
       saveDataToStorage();
       closeModal('deadlineModal');
-      renderAll();
+      renderDetailDeadlines();
       showToast('Scadenza salvata!');
     }
 
@@ -1646,160 +1551,251 @@
       appState.deadlines = appState.deadlines.filter(d => d.id !== id);
       saveDataToStorage();
       closeModal('deadlineModal');
-      renderAll();
-      showToast('Scadenza rimossa.');
+      renderDetailDeadlines();
+      showToast('Scadenza eliminata.');
     }
 
-    // --- Veicoli ---
-    function openVehicleModal(editId = null) {
-      document.getElementById('vehicleForm').reset();
+    // Manutenzioni
+    function openMaintenanceModal(editId = null) {
+      const v = getCurrentVehicle();
+      if (!v) return;
+      document.getElementById('maintenanceForm').reset();
+      currentUploadedPhotoBase64 = null;
+      document.getElementById('photoPreviewContainer').classList.add('hidden');
+      document.getElementById('photoUploadLabel').textContent = 'Allega foto ricevuta';
+      document.getElementById('reminderFields').classList.add('hidden');
+
       if (editId) {
-        const v = appState.vehicles.find(item => item.id === editId);
-        if (!v) return;
-        document.getElementById('vehicleModalTitle').textContent = 'Modifica Veicolo';
-        document.getElementById('vId').value = v.id;
-        document.getElementById('vName').value = v.name;
-        document.getElementById('vPlate').value = v.plate;
-        document.getElementById('vYear').value = v.year;
-        document.getElementById('vKm').value = v.km;
-        document.getElementById('vType').value = v.type || 'car';
+        const m = appState.maintenances.find(item => item.id === editId);
+        if (!m) return;
+        document.getElementById('maintenanceModalTitle').textContent = 'Modifica Intervento';
+        document.getElementById('mId').value = m.id;
+        document.getElementById('mTitle').value = m.title;
+        document.getElementById('mCategory').value = m.category;
+        document.getElementById('mDate').value = m.date;
+        document.getElementById('mKm').value = m.km;
+        document.getElementById('mCost').value = m.cost || '';
+        document.getElementById('mNotes').value = m.notes || '';
+        if (m.photo) {
+          currentUploadedPhotoBase64 = m.photo;
+          document.getElementById('mPhotoPreview').src = m.photo;
+          document.getElementById('photoPreviewContainer').classList.remove('hidden');
+          document.getElementById('photoUploadLabel').textContent = 'Sostituisci foto';
+        }
       } else {
-        document.getElementById('vehicleModalTitle').textContent = 'Aggiungi Veicolo';
-        document.getElementById('vId').value = '';
-        document.getElementById('vYear').value = new Date().getFullYear();
+        document.getElementById('maintenanceModalTitle').textContent = 'Registra Intervento';
+        document.getElementById('mId').value = '';
+        document.getElementById('mDate').value = new Date().toISOString().split('T')[0];
+        document.getElementById('mKm').value = v.km;
       }
-      openModal('vehicleModal');
+
+      openModal('maintenanceModal');
     }
 
-    function saveVehicle(event) {
+    function fillMaintenancePreset(title, category) {
+      document.getElementById('mTitle').value = title;
+      document.getElementById('mCategory').value = category;
+    }
+
+    function toggleReminderFields() {
+      const box = document.getElementById('reminderFields');
+      box.classList.toggle('hidden', !document.getElementById('mSetReminder').checked);
+    }
+
+    function handlePhotoUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+          const canvas = document.createElement('canvas');
+          const MAX_DIM = 850;
+          let w = img.width;
+          let h = img.height;
+          if (w > h && w > MAX_DIM) { h *= MAX_DIM / w; w = MAX_DIM; }
+          else if (h > MAX_DIM) { w *= MAX_DIM / h; h = MAX_DIM; }
+          canvas.width = w;
+          canvas.height = h;
+          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+
+          currentUploadedPhotoBase64 = canvas.toDataURL('image/jpeg', 0.65);
+          document.getElementById('mPhotoPreview').src = currentUploadedPhotoBase64;
+          document.getElementById('photoPreviewContainer').classList.remove('hidden');
+          document.getElementById('photoUploadLabel').textContent = 'Foto pronta';
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function removeUploadedPhoto() {
+      currentUploadedPhotoBase64 = null;
+      document.getElementById('mPhotoInput').value = '';
+      document.getElementById('photoPreviewContainer').classList.add('hidden');
+      document.getElementById('photoUploadLabel').textContent = 'Allega foto ricevuta';
+    }
+
+    function viewPhoto(src) {
+      document.getElementById('lightboxImg').src = src;
+      openModal('photoViewerModal');
+    }
+
+    function saveMaintenance(event) {
       event.preventDefault();
-      const id = document.getElementById('vId').value;
-      const name = document.getElementById('vName').value.trim();
-      const plate = document.getElementById('vPlate').value.trim().toUpperCase();
-      const year = parseInt(document.getElementById('vYear').value, 10);
-      const km = parseInt(document.getElementById('vKm').value, 10) || 0;
-      const type = document.getElementById('vType').value;
+      const v = getCurrentVehicle();
+      if (!v) return;
+
+      const id = document.getElementById('mId').value;
+      const title = document.getElementById('mTitle').value.trim();
+      const category = document.getElementById('mCategory').value;
+      const date = document.getElementById('mDate').value;
+      const km = parseInt(document.getElementById('mKm').value, 10) || 0;
+      const cost = document.getElementById('mCost').value ? parseFloat(document.getElementById('mCost').value) : null;
+      const notes = document.getElementById('mNotes').value.trim();
 
       if (id) {
-        const idx = appState.vehicles.findIndex(v => v.id === id);
+        const idx = appState.maintenances.findIndex(m => m.id === id);
         if (idx !== -1) {
-          appState.vehicles[idx] = { ...appState.vehicles[idx], name, plate, year, km, type };
+          appState.maintenances[idx] = {
+            ...appState.maintenances[idx],
+            title, category, date, km, cost, notes,
+            photo: currentUploadedPhotoBase64
+          };
         }
       } else {
-        const newId = 'veh_' + Date.now();
-        appState.vehicles.push({ id: newId, name, plate, year, km, type });
-        appState.activeVehicleId = newId;
-
-        // Crea automaticamente le 3 scadenze base per il nuovo veicolo
-        const nextYear = new Date();
-        nextYear.setFullYear(nextYear.getFullYear() + 1);
-        const nextYearStr = nextYear.toISOString().split('T')[0];
-
-        appState.deadlines.push(
-          { id: 'dl_' + Date.now() + '_1', vehicleId: newId, title: 'Revisione Ministeriale', type: 'revisione', dueDate: nextYearStr, dueKm: null, meta: 'Da verificare' },
-          { id: 'dl_' + Date.now() + '_2', vehicleId: newId, title: 'Assicurazione RCA', type: 'assicurazione', dueDate: nextYearStr, dueKm: null, meta: '' },
-          { id: 'dl_' + Date.now() + '_3', vehicleId: newId, title: 'Bollo Auto', type: 'bollo', dueDate: nextYearStr, dueKm: null, meta: '' }
-        );
+        appState.maintenances.push({
+          id: 'mnt_' + Date.now(),
+          vehicleId: v.id,
+          title, category, date, km, cost, notes,
+          photo: currentUploadedPhotoBase64
+        });
       }
 
-      appState.isDemo = false;
+      if (km > v.km) v.km = km;
+
+      if (document.getElementById('mSetReminder').checked) {
+        const remKm = parseInt(document.getElementById('mReminderKm').value, 10) || 0;
+        const remMonths = parseInt(document.getElementById('mReminderMonths').value, 10) || 0;
+        if (remKm > 0 || remMonths > 0) {
+          let dueDate = null;
+          if (remMonths > 0) {
+            const d = new Date(date);
+            d.setMonth(d.getMonth() + remMonths);
+            dueDate = d.toISOString().split('T')[0];
+          }
+          appState.deadlines.push({
+            id: 'dl_' + Date.now(),
+            vehicleId: v.id,
+            title: `Prossimo: ${title}`,
+            type: 'manutenzione',
+            dueDate,
+            dueKm: remKm > 0 ? km + remKm : null,
+            meta: `Da intervento del ${formatDateIT(date)}`
+          });
+        }
+      }
+
       saveDataToStorage();
-      closeModal('vehicleModal');
-      renderAll();
-      showToast('Veicolo salvato!');
+      closeModal('maintenanceModal');
+      renderVehicleDetail();
+      showToast('Intervento salvato!');
     }
 
-    function confirmDeleteVehicle(id) {
+    function confirmDeleteMaintenance(id) {
       openConfirmDialog(
-        'Eliminare questo veicolo?',
-        'Verranno eliminati anche tutti gli interventi e le scadenze associate a questa targa.',
+        'Eliminare intervento?',
+        'Questa voce verrà rimossa definitivamente dallo storico.',
         () => {
-          appState.vehicles = appState.vehicles.filter(v => v.id !== id);
-          appState.deadlines = appState.deadlines.filter(d => d.vehicleId !== id);
-          appState.maintenances = appState.maintenances.filter(m => m.vehicleId !== id);
-          if (appState.activeVehicleId === id) {
-            appState.activeVehicleId = appState.vehicles[0].id;
-          }
+          appState.maintenances = appState.maintenances.filter(m => m.id !== id);
           saveDataToStorage();
-          renderAll();
-          showToast('Veicolo eliminato.');
+          renderDetailMaintenances();
+          showToast('Intervento eliminato.');
         }
       );
     }
 
-    // --- Svuota Demo / Reset ---
-    function confirmClearDemo() {
-      openConfirmDialog(
-        'Svuotare i dati di esempio?',
-        'I dati demo verranno rimossi e potrai inserire subito i dati della tua auto.',
-        () => {
-          const freshId = 'veh_' + Date.now();
+    // ---------------------------------------------------------
+    // 9. BACKUP JSON & UTILITÀ
+    // ---------------------------------------------------------
+    function updateStorageMeter() {
+      const dataStr = localStorage.getItem(STORAGE_KEY) || '';
+      const bytes = new Blob([dataStr]).size;
+      const kb = (bytes / 1024).toFixed(1);
+      const percent = Math.min(100, Math.max(2, Math.round((bytes / (5 * 1024 * 1024)) * 100)));
+      document.getElementById('storageUsageText').textContent = `${kb} KB / 5.0 MB`;
+      document.getElementById('storageUsageBar').style.width = `${percent}%`;
+    }
+
+    function exportBackupJSON() {
+      const dateStr = new Date().toISOString().split('T')[0];
+      const blob = new Blob([JSON.stringify(appState, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `libretto-auto-backup-${dateStr}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('Backup scaricato!');
+    }
+
+    function importBackupJSON(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const imported = JSON.parse(e.target.result);
+          if (!imported || !Array.isArray(imported.vehicles)) {
+            showToast('File non valido.');
+            return;
+          }
           appState = {
-            activeVehicleId: freshId,
-            isDemo: false,
-            vehicles: [{
-              id: freshId,
-              name: 'La Mia Auto',
-              plate: 'AA 000 AA',
-              year: new Date().getFullYear(),
-              km: 0,
-              type: 'car'
-            }],
-            deadlines: [],
-            maintenances: []
+            vehicles: imported.vehicles || [],
+            deadlines: imported.deadlines || [],
+            maintenances: imported.maintenances || []
           };
           saveDataToStorage();
-          renderAll();
-          openVehicleModal(freshId);
+          closeModal('backupModal');
+          backToGarage();
+          showToast('Backup ripristinato!');
+        } catch (err) {
+          showToast('Errore lettura file.');
         }
-      );
+        event.target.value = '';
+      };
+      reader.readAsText(file);
     }
 
-    function confirmFactoryReset() {
-      openConfirmDialog(
-        'Cancellare tutti i dati?',
-        'Assicurati di aver esportato un backup JSON. Tutti i veicoli e lo storico verranno cancellati dal telefono.',
-        () => {
-          localStorage.removeItem(STORAGE_KEY);
-          appState = getSeedDemoData();
-          saveDataToStorage();
-          renderAll();
-          showToast('App ripristinata.');
-        }
-      );
-    }
-
-    // ---------------------------------------------------------
-    // 7. UTILITÀ UI (DIALOGHI, TOAST, FORMATTAZIONE)
-    // ---------------------------------------------------------
     function openConfirmDialog(title, message, onConfirm) {
       document.getElementById('confirmTitle').textContent = title;
       document.getElementById('confirmMessage').textContent = message;
-      const okBtn = document.getElementById('confirmOkBtn');
-      okBtn.onclick = () => {
+      document.getElementById('confirmOkBtn').onclick = () => {
         closeModal('confirmDialogModal');
         onConfirm();
       };
       openModal('confirmDialogModal');
     }
 
-    let toastTimeout;
+    let toastTimer;
     function showToast(msg) {
       const toast = document.getElementById('toast');
       document.getElementById('toastMessage').textContent = msg;
       toast.classList.remove('opacity-0', '-translate-y-2');
       toast.classList.add('opacity-100', 'translate-y-0');
-
-      clearTimeout(toastTimeout);
-      toastTimeout = setTimeout(() => {
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
         toast.classList.remove('opacity-100', 'translate-y-0');
         toast.classList.add('opacity-0', '-translate-y-2');
-      }, 2600);
+      }, 2500);
     }
 
-    function formatDateIT(isoDate) {
-      if (!isoDate) return '';
-      const [y, m, d] = isoDate.split('-');
+    function formatDateIT(iso) {
+      if (!iso) return '';
+      const [y, m, d] = iso.split('-');
       return `${d}/${m}/${y}`;
     }
 
