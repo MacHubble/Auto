@@ -83,8 +83,11 @@
   .car-card:active { transform: scale(0.985); }
   .car-card-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
   .car-avatar-box {
-    width: 148px; height: 84px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+    width: 132px; height: 76px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
     overflow: hidden; border-radius: 12px; background: #fff;
+  }
+  @media (min-width: 410px) {
+    .car-avatar-box { width: 148px; height: 84px; }
   }
   .car-avatar-box img { width: 100%; height: 100%; object-fit: contain; }
   .car-avatar-box svg { width: 100%; height: 100%; }
@@ -96,12 +99,16 @@
   .plate {
     display: inline-flex; align-items: stretch; border: 1.5px solid #1f2937; border-radius: 5px;
     overflow: hidden; background: #fff; height: 24px; font-family: "Courier New", monospace; font-weight: 800;
+    flex-shrink: 0; white-space: nowrap; max-width: 100%;
   }
   .plate-band {
-    background: #003399; color: #fff; width: 14px; font-size: 8px; display: flex;
+    background: #003399; color: #fff; width: 14px; flex-shrink: 0; font-size: 8px; display: flex;
     flex-direction: column; align-items: center; justify-content: space-between; padding: 2px 0;
   }
-  .plate-num { padding: 0 7px; font-size: 13px; letter-spacing: 1px; display: flex; align-items: center; color: #111; }
+  .plate-num {
+    padding: 0 6px; font-size: 12.5px; letter-spacing: 0.5px; display: flex; align-items: center;
+    color: #111; white-space: nowrap;
+  }
 
   .car-card-footer {
     margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border);
