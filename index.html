@@ -768,8 +768,38 @@ function parseItalianLibrettoText(raw) {
   }
 
   // 2. Data prima immatricolazione (B) -> formato YYYY-MM-DD + anno
+  // Nel Documento Unico / Carta di Circolazione italiano la data (B) può trovarsi:
+  // - Subito dopo (B) o B
+  // - Oppure subito dopo la targa (A) (es. "GH 123 AB 15/06/2023") quando i campi sono tabellari
+  let dateMatch = null;
   const bField = extractField('B');
-  const dateMatch = (bField || text).match(/\b(0?[1-9]|[12][0-9]|3[01])[\/\.\-](0?[1-9]|1[012])[\/\.\-](199\d|20[0-2]\d)\b/);
+  if (bField) {
+    dateMatch = bField.match(/\b(0?[1-9]|[12][0-9]|3[01])[\/\.\-](0?[1-9]|1[012])[\/\.\-](199\d|20[0-2]\d)\b/);
+  }
+  if (!dateMatch) {
+    // Cerca esplicitamente (B) seguito entro 25 caratteri da una data DD/MM/YYYY
+    const nearB = text.match(/(?:\(B\)|\bB\b)[^0-9]{0,25}\b(0?[1-9]|[12][0-9]|3[01])[\/\.\-](0?[1-9]|1[012])[\/\.\-](199\d|20[0-2]\d)\b/i);
+    if (nearB) dateMatch = [nearB[0], nearB[1], nearB[2], nearB[3]];
+  }
+  if (!dateMatch && result.plate) {
+    // Cerca una data immediatamente dopo la targa (layout tabellare DUC: Targa | Data 1a immatricolazione)
+    const cleanPlateEsc = result.plate.replace(/\s+/g, '\\s*');
+    const afterPlate = text.match(new RegExp(cleanPlateEsc + '[^0-9]{0,30}\\b(0?[1-9]|[12][0-9]|3[01])[\\/\\.\\-](0?[1-9]|1[012])[\\/\\.\\-](199\\d|20[0-2]\\d)\\b', 'i'));
+    if (afterPlate) dateMatch = [afterPlate[0], afterPlate[1], afterPlate[2], afterPlate[3]];
+  }
+  if (!dateMatch) {
+    // Raccogli tutte le date valide nel documento ed escludi quelle chiaramente di emissione/stampa recenti se ce n'è una più vecchia
+    const allDates = [...text.matchAll(/\b(0?[1-9]|[12][0-9]|3[01])[\/\.\-](0?[1-9]|1[012])[\/\.\-](199\d|20[0-2]\d)\b/g)];
+    if (allDates.length > 0) {
+      // Ordina cronologicamente: la data di prima immatricolazione (B) è tipicamente la prima/più antica data del libretto
+      allDates.sort((a, b) => {
+        const da = `${a[3]}-${a[2].padStart(2,'0')}-${a[1].padStart(2,'0')}`;
+        const db = `${b[3]}-${b[2].padStart(2,'0')}-${b[1].padStart(2,'0')}`;
+        return da.localeCompare(db);
+      });
+      dateMatch = allDates[0];
+    }
+  }
   if (dateMatch) {
     const dd = dateMatch[1].padStart(2, '0');
     const mm = dateMatch[2].padStart(2, '0');
@@ -1106,11 +1136,7 @@ function endOfMonthISO(year, month1to12) {
 
 function computeItalianRevisione(car) {
   let regDateStr = car.regDate || '';
-  if (!regDateStr && car.year && /^\d{4}$/.test(String(car.year))) {
-    // Fallback se inserito solo l'anno senza mese/giorno: fine dicembre dell'anno
-    regDateStr = `${car.year}-12-31`;
-  }
-  if (!regDateStr) return null;
+  if (!regDateStr || !/^\d{4}-\d{2}-\d{2}$/.test(regDateStr)) return null;
 
   const parts = regDateStr.split('-');
   if (parts.length < 3) return null;
@@ -1569,7 +1595,7 @@ function openCarModal(editId = null) {
     document.getElementById('car-plate').value = car.plate || '';
     document.getElementById('car-km').value = car.km;
     document.getElementById('car-year').value = car.year || '';
-    document.getElementById('car-reg-date').value = car.regDate || (car.year ? `${car.year}-01-01` : '');
+    document.getElementById('car-reg-date').value = car.regDate || '';
     selectColor(car.color || '#f8fafc');
     onShapeChange();
   } else {
