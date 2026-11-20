@@ -334,12 +334,12 @@
       </div>
 
       <div class="form-group">
-        <label>Marca e Modello Principale *</label>
+        <label>Marca e Modello Principale (D.1 / D.2) *</label>
         <input type="text" id="car-name" placeholder="Es. Dacia Sandero, Renault Kadjar..." required oninput="autoDetectCar(this.value)">
       </div>
 
       <div class="form-group">
-        <label>Modello Esatto / Allestimento (D.3)</label>
+        <label>Tipo / Variante / Versione (D.2 / D.3)</label>
         <input type="text" id="car-exact-model" placeholder="Es. 1.0 TCe 90 CV Expression / 1.5 Blue dCi">
       </div>
 
@@ -716,83 +716,108 @@ function parseItalianLibrettoText(raw) {
     year: ''
   };
 
-  // 1. Targa italiana (es. AB 123 CD o AB123CD)
-  const plateMatch = upper.match(/\b([A-Z]{2}\s?[0-9]{3}\s?[A-Z]{2})\b/);
+  // Helper per estrarre il valore associato a un codice libretto europeo es. (D.1), (D.2), (D.3), (P.1), (P.2), (P.3)
+  function extractField(codeRegex) {
+    const re = new RegExp(
+      '(?:\\(|\\b)' + codeRegex + '(?:\\)|[:\\-\\s])\\s*([^()]+?)(?=\\s*(?:\\([A-Z0-9]{1,2}(?:\\.[0-9])?\\)|\\b(?:D\\.[123]|E|F\\.[123]|G|I|J|K|P\\.[1235]|Q|S\\.[12]|V\\.[79])\\b|$))',
+      'i'
+    );
+    const m = text.match(re);
+    return m ? m[1].replace(/^[:\-\.\s]+|[:\-\.\s]+$/g, '').trim() : '';
+  }
+
+  // 1. Targa italiana (A)
+  const plateField = extractField('A');
+  const plateMatch = (plateField || upper).toUpperCase().match(/\b([A-Z]{2}\s?[0-9]{3}\s?[A-Z]{2})\b/);
   if (plateMatch) {
     const cleanP = plateMatch[1].replace(/\s+/g, '');
     result.plate = `${cleanP.slice(0,2)} ${cleanP.slice(2,5)} ${cleanP.slice(5,7)}`;
   }
 
   // 2. Anno prima immatricolazione (B)
-  const dateMatch = text.match(/\b(0?[1-9]|[12][0-9]|3[01])[\/\.\-](0?[1-9]|1[012])[\/\.\-](199\d|20[0-2]\d)\b/);
+  const bField = extractField('B');
+  const dateMatch = (bField || text).match(/\b(0?[1-9]|[12][0-9]|3[01])[\/\.\-](0?[1-9]|1[012])[\/\.\-](199\d|20[0-2]\d)\b/);
   if (dateMatch) {
     result.year = dateMatch[3];
   }
 
-  // 3. Cilindrata P.1 (es. (P.1) 1461 o 999 cm3 / cc)
-  const p1Match = upper.match(/\(?P\.?1\)?\s*[:\-]?\s*([0-9]{3,4})\b/) || upper.match(/\b([0-9]{3,4})\s*(?:CM3|CC)\b/);
-  if (p1Match) {
-    result.displacement = `${p1Match[1]} cc`;
-  }
+  // 3. Marca e Modello dai campi (D.1) e (D.2) (+ eventuale D.3)
+  const d1Raw = extractField('D\\.?1');
+  const d2Raw = extractField('D\\.?2');
+  const d3Raw = extractField('D\\.?3');
 
-  // 4. Potenza P.2 (es. (P.2) 81,00 o 67 kW)
-  const p2Match = upper.match(/\(?P\.?2\)?\s*[:\-]?\s*([0-9]{2,3}(?:[\.,][0-9]{1,2})?)\b/) || upper.match(/\b([0-9]{2,3}(?:[\.,][0-9]{1,2})?)\s*KW\b/);
-  if (p2Match) {
-    const kwVal = parseFloat(p2Match[1].replace(',', '.'));
-    if (!isNaN(kwVal) && kwVal > 15 && kwVal < 600) {
-      const cvVal = Math.round(kwVal * 1.35962);
-      result.power = `${Math.round(kwVal)} kW (${cvVal} CV)`;
-    }
-  }
+  const formatBrand = (s) => {
+    if (!s) return '';
+    return s.split(/\s+/).map(w => w.toUpperCase() === 'BMW' ? 'BMW' : (w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())).join(' ');
+  };
 
-  // 5. Alimentazione P.3
-  if (/\bGASOLIO\b|\bDIESEL\b/.test(upper)) {
-    result.fuel = /IBRID|HYBRID|ELETTR/.test(upper) ? 'Ibrido Diesel' : 'Diesel';
-  } else if (/\bBENZINA\b/.test(upper)) {
-    if (/GPL|G\.P\.L/.test(upper)) result.fuel = 'Benzina / GPL';
-    else if (/METANO|CNG/.test(upper)) result.fuel = 'Benzina / Metano';
-    else if (/IBRID|HYBRID|ELETTR/.test(upper)) result.fuel = 'Ibrido Benzina';
-    else result.fuel = 'Benzina';
-  } else if (/\bELETTRIC/.test(upper)) {
-    result.fuel = 'Elettrica';
-  } else if (/\bIBRID|\bHYBRID/.test(upper)) {
-    result.fuel = 'Ibrida';
-  }
+  const brandClean = formatBrand(d1Raw);
+  // In D.2 spesso la prima parola o riga è il modello/tipo (es. "DJF ..." o "RFE ..." o nome modello)
+  const d2FirstToken = d2Raw ? d2Raw.split(/\s+/)[0] : '';
 
-  // 6. Marca (D.1) e Denominazione Commerciale / Modello Esatto (D.3)
-  const knownBrands = ['DACIA', 'RENAULT', 'FIAT', 'VOLKSWAGEN', 'FORD', 'PEUGEOT', 'CITROEN', 'OPEL', 'TOYOTA', 'HYUNDAI', 'KIA', 'AUDI', 'BMW', 'MERCEDES', 'JEEP', 'NISSAN', 'ALFA ROMEO', 'LANCIA', 'SEAT', 'SKODA', 'VOLVO', 'MAZDA', 'SUZUKI'];
-  let foundBrand = '';
-  for (const b of knownBrands) {
-    if (upper.includes(b)) {
-      foundBrand = b.charAt(0) + b.slice(1).toLowerCase();
-      if (b === 'BMW') foundBrand = 'BMW';
-      break;
-    }
-  }
-
-  const d3Match = text.match(/\(?D\.?3\)?\s*[:\-]?\s*([A-Za-z0-9\s\-\.\/]{3,42}?)(?=\s*\(?[A-Z]\.?[0-9]|\s+J\b|\s+K\b|\s+P\.?1|$)/i);
-  if (d3Match) {
-    const cleanD3 = d3Match[1].replace(/\s+/g, ' ').trim();
-    result.exactModel = cleanD3;
-    if (foundBrand) {
-      const firstWord = cleanD3.split(' ')[0];
-      result.brandModel = cleanD3.toUpperCase().startsWith(foundBrand.toUpperCase())
-        ? cleanD3.split(' ').slice(0, 2).join(' ')
-        : `${foundBrand} ${firstWord}`;
+  if (brandClean && d2Raw) {
+    // Se D.3 contiene la denominazione commerciale leggibile (es. SANDERO o KADJAR), usiamola insieme a D.1 per il titolo principale e mettiamo D.2 completo nel sottotitolo, oppure D.1 + D.2
+    const d3Model = d3Raw ? formatBrand(d3Raw.split(/\s+/)[0]) : '';
+    if (d3Model && d3Model.toUpperCase() !== brandClean.toUpperCase()) {
+      result.brandModel = `${brandClean} ${d3Model}`;
+      result.exactModel = d2Raw;
     } else {
-      result.brandModel = cleanD3.split(' ').slice(0, 2).join(' ');
+      result.brandModel = `${brandClean} ${d2FirstToken}`.trim();
+      result.exactModel = d2Raw;
     }
-  } else if (foundBrand) {
-    if (upper.includes('SANDERO')) {
-      result.brandModel = 'Dacia Sandero';
-      const sanderoVar = text.match(/(SANDERO\s+[A-Za-z0-9\s\.\-]{2,28})/i);
-      if (sanderoVar) result.exactModel = sanderoVar[1].trim();
-    } else if (upper.includes('KADJAR')) {
-      result.brandModel = 'Renault Kadjar';
-      const kadjarVar = text.match(/(KADJAR\s+[A-Za-z0-9\s\.\-]{2,28})/i);
-      if (kadjarVar) result.exactModel = kadjarVar[1].trim();
+  } else if (brandClean) {
+    result.brandModel = brandClean;
+    if (d3Raw) result.exactModel = d3Raw;
+  } else if (d2Raw) {
+    result.brandModel = d2FirstToken;
+    result.exactModel = d2Raw;
+  }
+
+  // 4. Cilindrata esclusivamente dal campo (P.1)
+  const p1Raw = extractField('P\\.?1');
+  if (p1Raw) {
+    const numMatch = p1Raw.match(/([0-9]{3,5})/);
+    if (numMatch) {
+      result.displacement = `${numMatch[1]} cc`;
     } else {
-      result.brandModel = foundBrand;
+      result.displacement = p1Raw;
+    }
+  }
+
+  // 5. Potenza dal campo (P.2)
+  const p2Raw = extractField('P\\.?2');
+  if (p2Raw) {
+    const kwMatch = p2Raw.match(/([0-9]{2,3}(?:[\.,][0-9]{1,2})?)/);
+    if (kwMatch) {
+      const kwVal = parseFloat(kwMatch[1].replace(',', '.'));
+      if (!isNaN(kwVal) && kwVal > 10 && kwVal < 800) {
+        const cvVal = Math.round(kwVal * 1.35962);
+        result.power = `${Math.round(kwVal)} kW (${cvVal} CV)`;
+      }
+    }
+  }
+
+  // 6. Alimentazione esclusivamente dal campo (P.3)
+  const p3Raw = extractField('P\\.?3');
+  if (p3Raw) {
+    const p3Upper = p3Raw.toUpperCase();
+    if (p3Upper.includes('GASOLIO') || p3Upper.includes('DIESEL')) {
+      result.fuel = /IBRID|HYBRID|ELETTR/.test(p3Upper) ? 'Ibrido Diesel' : 'Diesel';
+    } else if (p3Upper.includes('BENZINA')) {
+      if (/GPL|G\.P\.L/.test(p3Upper)) result.fuel = 'Benzina / GPL';
+      else if (/METANO|CNG/.test(p3Upper)) result.fuel = 'Benzina / Metano';
+      else if (/IBRID|HYBRID|ELETTR/.test(p3Upper)) result.fuel = 'Ibrido Benzina';
+      else result.fuel = 'Benzina';
+    } else if (p3Upper.includes('ELETTR')) {
+      result.fuel = 'Elettrica';
+    } else if (/IBRID|HYBRID/.test(p3Upper)) {
+      result.fuel = 'Ibrida';
+    } else if (p3Upper.includes('GPL')) {
+      result.fuel = 'GPL';
+    } else if (p3Upper.includes('METANO')) {
+      result.fuel = 'Metano';
+    } else {
+      result.fuel = p3Raw.charAt(0).toUpperCase() + p3Raw.slice(1).toLowerCase();
     }
   }
 
