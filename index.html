@@ -164,6 +164,36 @@
   }
   .section-head h3 { margin: 0; font-size: 16px; font-weight: 800; }
 
+  .revisione-box {
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+    border: 1.5px solid #cbd5e1;
+    border-radius: 18px;
+    padding: 15px 16px;
+    margin-bottom: 14px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+  }
+  .revisione-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--border);
+  }
+  .revisione-title {
+    font-size: 15px; font-weight: 900; letter-spacing: 0.4px; color: var(--primary);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .rev-subrow {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 9px 11px; border-radius: 12px; background: #fff;
+    border: 1px solid var(--border); margin-top: 8px; gap: 8px;
+  }
+  .rev-subrow.active-rev {
+    border-color: #93c5fd; background: #eff6ff;
+  }
+  .rev-subrow-label {
+    font-size: 13px; font-weight: 700; color: #1f2937;
+  }
+  .rev-subrow-sub {
+    font-size: 11.5px; color: var(--muted); margin-top: 2px;
+  }
   .item-card {
     background: var(--card); border-radius: 16px; padding: 14px 16px; margin-bottom: 10px;
     border: 1px solid var(--border);
@@ -388,8 +418,9 @@
           <input type="number" id="car-km" placeholder="Es. 65000" required min="0">
         </div>
         <div class="form-group">
-          <label>Anno Immatricolazione (B)</label>
-          <input type="number" id="car-year" placeholder="Es. 2021" min="1970" max="2030">
+          <label>1ª Immatricolazione (B)</label>
+          <input type="date" id="car-reg-date" onchange="syncYearFromRegDate(this.value)">
+          <input type="hidden" id="car-year">
         </div>
       </div>
 
@@ -410,11 +441,8 @@
       <div class="form-group">
         <label>Tipo Scadenza *</label>
         <select id="dl-type" onchange="onDeadlineTypeChange()">
-          <option value="Revisione Ministeriale">Revisione Ministeriale</option>
           <option value="Tagliando / Cambio Olio">Tagliando / Cambio Olio</option>
-          <option value="Assicurazione RCA">Assicurazione RCA</option>
-          <option value="Bollo Auto">Bollo Auto</option>
-          <option value="Inversione / Cambio Gomme">Inversione / Cambio Gomme</option>
+          <option value="Revisione Extra / Bombole">Revisione Extra / Bombole</option>
           <option value="Altro">Altro promemoria</option>
         </select>
       </div>
@@ -683,7 +711,11 @@ async function scanLibrettoFile(e) {
       document.getElementById('car-power').value = extracted.power;
       foundCount++;
     }
-    if (extracted.year) {
+    if (extracted.regDate) {
+      document.getElementById('car-reg-date').value = extracted.regDate;
+      document.getElementById('car-year').value = extracted.year || extracted.regDate.slice(0, 4);
+      foundCount++;
+    } else if (extracted.year) {
       document.getElementById('car-year').value = extracted.year;
       foundCount++;
     }
@@ -713,7 +745,8 @@ function parseItalianLibrettoText(raw) {
     displacement: '',
     fuel: '',
     power: '',
-    year: ''
+    year: '',
+    regDate: ''
   };
 
   // Helper per estrarre il valore associato a un codice libretto europeo es. (D.1), (D.2), (D.3), (P.1), (P.2), (P.3)
@@ -734,11 +767,15 @@ function parseItalianLibrettoText(raw) {
     result.plate = `${cleanP.slice(0,2)} ${cleanP.slice(2,5)} ${cleanP.slice(5,7)}`;
   }
 
-  // 2. Anno prima immatricolazione (B)
+  // 2. Data prima immatricolazione (B) -> formato YYYY-MM-DD + anno
   const bField = extractField('B');
   const dateMatch = (bField || text).match(/\b(0?[1-9]|[12][0-9]|3[01])[\/\.\-](0?[1-9]|1[012])[\/\.\-](199\d|20[0-2]\d)\b/);
   if (dateMatch) {
-    result.year = dateMatch[3];
+    const dd = dateMatch[1].padStart(2, '0');
+    const mm = dateMatch[2].padStart(2, '0');
+    const yyyy = dateMatch[3];
+    result.regDate = `${yyyy}-${mm}-${dd}`;
+    result.year = yyyy;
   }
 
   // 3. Marca e Modello dai campi (D.1) e (D.2) (+ eventuale D.3)
@@ -1055,6 +1092,134 @@ function getCarVisual(shape, color) {
   </svg>`;
 }
 
+
+/* ================= CALCOLO AUTOMATICO REVISIONE (ITALIA) ================= */
+// Prima revisione: 4 anni dalla prima immatricolazione (B), entro la fine del mese.
+// Alla scadenza della prima revisione, compila la revisione successiva (+ 2 anni, sempre fine mese).
+function endOfMonthISO(year, month1to12) {
+  // Date(year, month1to12, 0) dà l'ultimo giorno del mese month1to12 (1=Gennaio ... 12=Dicembre)
+  const lastDay = new Date(year, month1to12, 0).getDate();
+  const mm = String(month1to12).padStart(2, '0');
+  const dd = String(lastDay).padStart(2, '0');
+  return `${year}-${mm}-${dd}`;
+}
+
+function computeItalianRevisione(car) {
+  let regDateStr = car.regDate || '';
+  if (!regDateStr && car.year && /^\d{4}$/.test(String(car.year))) {
+    // Fallback se inserito solo l'anno senza mese/giorno: fine dicembre dell'anno
+    regDateStr = `${car.year}-12-31`;
+  }
+  if (!regDateStr) return null;
+
+  const parts = regDateStr.split('-');
+  if (parts.length < 3) return null;
+  const regYear = parseInt(parts[0], 10);
+  const regMonth = parseInt(parts[1], 10);
+  if (isNaN(regYear) || isNaN(regMonth)) return null;
+
+  // Prima revisione = anno + 4, ultimo giorno del mese di immatricolazione
+  const primaRevISO = endOfMonthISO(regYear + 4, regMonth);
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const primaRevDate = new Date(primaRevISO + 'T00:00:00');
+
+  let successivaRevISO = null;
+  let activeTargetISO = primaRevISO;
+
+  // Se la prima revisione è scaduta (today > primaRevDate), compila la revisione successiva (+ 2 anni)
+  // Se anche quella +2 anni fosse già passata nel tempo, avanza a scatti di 2 anni fino alla scadenza attuale/futura
+  if (today > primaRevDate) {
+    let nextYear = regYear + 4 + 2;
+    let candidateISO = endOfMonthISO(nextYear, regMonth);
+    let candidateDate = new Date(candidateISO + 'T00:00:00');
+    while (today > candidateDate) {
+      nextYear += 2;
+      candidateISO = endOfMonthISO(nextYear, regMonth);
+      candidateDate = new Date(candidateISO + 'T00:00:00');
+    }
+    successivaRevISO = candidateISO;
+    activeTargetISO = successivaRevISO;
+  }
+
+  return {
+    regDateISO: regDateStr,
+    primaRevISO,
+    successivaRevISO,
+    activeTargetISO
+  };
+}
+
+function renderRevisioneBlock(car) {
+  const rev = computeItalianRevisione(car);
+  if (!rev) {
+    return `
+      <div class="revisione-box">
+        <div class="revisione-header">
+          <div class="revisione-title">🛡️ REVISIONE</div>
+          <span class="badge badge-warn">Data (B) mancante</span>
+        </div>
+        <div style="font-size:12.5px; color:var(--muted); line-height:1.45;">
+          Inserisci la <b>Data di 1ª Immatricolazione (B)</b> (manualmente o scansionando il PDF del libretto in <i>Modifica</i>) per calcolare automaticamente <b>Prima Revisione</b> (4 anni) e <b>Revisione Successiva</b> (+2 anni).
+        </div>
+      </div>
+    `;
+  }
+
+  const primaStatus = getDeadlineStatus({ date: rev.primaRevISO }, car.km);
+  const isPrimaExpired = rev.successivaRevISO !== null;
+  const primaBadgeHtml = isPrimaExpired
+    ? `<span class="badge" style="background:#f1f5f9; color:#64748b;">Effettuata / Scaduta</span>`
+    : `<span class="badge badge-${primaStatus.level}">${primaStatus.text}</span>`;
+
+  let succHtml = '';
+  if (rev.successivaRevISO) {
+    const succStatus = getDeadlineStatus({ date: rev.successivaRevISO }, car.km);
+    succHtml = `
+      <div class="rev-subrow active-rev">
+        <div>
+          <div class="rev-subrow-label">Revisione Successiva (+2 anni)</div>
+          <div class="rev-subrow-sub">Entro il <b>${new Date(rev.successivaRevISO + 'T00:00:00').toLocaleDateString('it-IT')}</b></div>
+        </div>
+        <span class="badge badge-${succStatus.level}">${succStatus.text}</span>
+      </div>
+    `;
+  } else {
+    succHtml = `
+      <div class="rev-subrow" style="opacity:0.65;">
+        <div>
+          <div class="rev-subrow-label">Revisione Successiva</div>
+          <div class="rev-subrow-sub">Verrà compilata (+2 anni) alla scadenza della prima</div>
+        </div>
+        <span style="font-size:12px; color:var(--muted); font-weight:600;">—</span>
+      </div>
+    `;
+  }
+
+  const activeStatus = getDeadlineStatus({ date: rev.activeTargetISO }, car.km);
+
+  return `
+    <div class="revisione-box">
+      <div class="revisione-header">
+        <div class="revisione-title">🛡️ REVISIONE</div>
+        <span class="badge badge-${activeStatus.level}">${activeStatus.text}</span>
+      </div>
+      <div style="font-size:11.5px; color:var(--muted); margin-bottom:4px;">
+        1ª Immatricolazione (B): <b>${new Date(rev.regDateISO + 'T00:00:00').toLocaleDateString('it-IT')}</b>
+      </div>
+      <div class="rev-subrow ${!isPrimaExpired ? 'active-rev' : ''}">
+        <div>
+          <div class="rev-subrow-label">Prima Revisione (4 anni)</div>
+          <div class="rev-subrow-sub">Entro fine mese: <b>${new Date(rev.primaRevISO + 'T00:00:00').toLocaleDateString('it-IT')}</b></div>
+        </div>
+        ${primaBadgeHtml}
+      </div>
+      ${succHtml}
+    </div>
+  `;
+}
+
 function getDeadlineStatus(dl, currentKm) {
   let worst = { level: 'ok', text: 'In regola' };
   const today = new Date(); today.setHours(0,0,0,0);
@@ -1080,11 +1245,16 @@ function getDeadlineStatus(dl, currentKm) {
 }
 
 function getCarSummaryBadge(car) {
-  if (!car.deadlines || car.deadlines.length === 0) {
+  const rev = computeItalianRevisione(car);
+  const allDeadlines = [...(car.deadlines || [])];
+  if (rev && rev.activeTargetISO) {
+    allDeadlines.push({ date: rev.activeTargetISO });
+  }
+  if (allDeadlines.length === 0) {
     return `<span class="badge badge-ok">Nessuna scadenza</span>`;
   }
   let hasBad = 0, hasWarn = 0;
-  car.deadlines.forEach(d => {
+  allDeadlines.forEach(d => {
     const st = getDeadlineStatus(d, car.km);
     if (st.level === 'bad') hasBad++;
     else if (st.level === 'warn') hasWarn++;
@@ -1240,7 +1410,7 @@ function render() {
       </div>
 
       <div class="tabs">
-        <button class="tab ${state.activeTab==='deadlines'?'active':''}" onclick="switchTab('deadlines')">Scadenze (${(car.deadlines||[]).length})</button>
+        <button class="tab ${state.activeTab==='deadlines'?'active':''}" onclick="switchTab('deadlines')">Scadenze (${(car.deadlines||[]).length + (computeItalianRevisione(car) ? 1 : 0)})</button>
         <button class="tab ${state.activeTab==='maint'?'active':''}" onclick="switchTab('maint')">Manutenzioni (${(car.maintenances||[]).length})</button>
       </div>
     `;
@@ -1251,9 +1421,10 @@ function render() {
           <h3>Scadenze & Controlli</h3>
           <button class="btn btn-primary btn-sm" onclick="openDeadlineModal()">+ Scadenza</button>
         </div>
+        ${renderRevisioneBlock(car)}
       `;
       if (!car.deadlines || car.deadlines.length === 0) {
-        html += `<div class="item-card" style="text-align:center; color:var(--muted); padding:26px;">Nessuna scadenza impostata.<br>Aggiungi revisione, bollo, assicurazione o tagliando.</div>`;
+        html += `<div class="item-card" style="text-align:center; color:var(--muted); padding:20px;">Nessun'altra scadenza aggiuntiva.<br>Usa "+ Scadenza" per bollo, assicurazione RCA o tagliandi.</div>`;
       } else {
         html += car.deadlines.map(dl => {
           const st = getDeadlineStatus(dl, car.km);
@@ -1373,6 +1544,12 @@ function autoDetectCar(val) {
   }
 }
 
+function syncYearFromRegDate(val) {
+  if (val && val.length >= 4) {
+    document.getElementById('car-year').value = val.slice(0, 4);
+  }
+}
+
 function openCarModal(editId = null) {
   document.getElementById('form-car').reset();
   const statusEl = document.getElementById('scan-status');
@@ -1392,6 +1569,7 @@ function openCarModal(editId = null) {
     document.getElementById('car-plate').value = car.plate || '';
     document.getElementById('car-km').value = car.km;
     document.getElementById('car-year').value = car.year || '';
+    document.getElementById('car-reg-date').value = car.regDate || (car.year ? `${car.year}-01-01` : '');
     selectColor(car.color || '#f8fafc');
     onShapeChange();
   } else {
@@ -1417,7 +1595,8 @@ function saveCar(e) {
     plate: document.getElementById('car-plate').value.trim().toUpperCase(),
     color: document.getElementById('car-color').value,
     km: parseInt(document.getElementById('car-km').value, 10) || 0,
-    year: document.getElementById('car-year').value.trim()
+    regDate: document.getElementById('car-reg-date').value.trim(),
+    year: (document.getElementById('car-reg-date').value.trim().slice(0, 4)) || document.getElementById('car-year').value.trim()
   };
 
   if (id) {
