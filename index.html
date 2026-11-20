@@ -505,10 +505,11 @@
 <div class="modal-backdrop" id="modal-maint">
   <div class="modal">
     <div class="modal-head">
-      <h3>Registra Intervento</h3>
+      <h3 id="modal-maint-title">Registra Intervento</h3>
       <button class="close-btn" onclick="closeModal('modal-maint')">&times;</button>
     </div>
     <form id="form-maint" onsubmit="saveMaint(event)">
+      <input type="hidden" id="m-id">
       <div class="form-group">
         <label>Intervento Eseguito *</label>
         <input type="text" id="m-title" placeholder="Es. Tagliando completo, Pastiglie freni..." required>
@@ -527,7 +528,9 @@
         <div class="form-group">
           <label>Categoria</label>
           <select id="m-cat">
+            <option value="Tagliando Completo">Tagliando Completo</option>
             <option value="Tagliando">Tagliando / Olio</option>
+            <option value="Filtri Abitacolo">Filtri Abitacolo</option>
             <option value="Freni">Freni</option>
             <option value="Gomme">Pneumatici</option>
             <option value="Revisione">Revisione</option>
@@ -547,6 +550,10 @@
         <label>Foto Fattura / Ricevuta (opzionale)</label>
         <input type="file" id="m-photo" accept="image/*" onchange="handlePhoto(event)">
         <input type="hidden" id="m-photo-data">
+        <div id="m-photo-preview-wrap" style="display:none; margin-top:8px;">
+          <img id="m-photo-preview" class="receipt-thumb" alt="Anteprima ricevuta">
+          <button type="button" class="btn btn-danger btn-sm" style="margin-top:6px;" onclick="removeMaintPhoto()">Rimuovi foto</button>
+        </div>
       </div>
       <button type="submit" class="btn btn-primary btn-block">Salva nel Libretto</button>
     </form>
@@ -1742,7 +1749,8 @@ function render() {
               ${m.cost ? `<div style="font-weight:800; font-size:15px;">€ ${parseFloat(m.cost).toFixed(2)}</div>` : ''}
             </div>
             ${m.photo ? `<img src="${m.photo}" class="receipt-thumb" alt="Ricevuta">` : ''}
-            <div style="margin-top:8px; text-align:right;">
+            <div style="margin-top:10px; display:flex; gap:8px; justify-content:flex-end;">
+              <button class="btn btn-secondary btn-sm" onclick="openMaintModal('${m.id}')">✏️ Modifica</button>
               <button class="btn btn-danger btn-sm" onclick="deleteMaint('${m.id}')">Elimina</button>
             </div>
           </div>
@@ -1967,13 +1975,48 @@ function deleteDeadline(dlId) {
 }
 
 /* Maintenance */
-function openMaintModal() {
+function openMaintModal(editId = null) {
   const car = state.cars.find(c => c.id === state.selectedCarId);
   document.getElementById('form-maint').reset();
-  document.getElementById('m-date').value = new Date().toISOString().split('T')[0];
-  document.getElementById('m-km').value = car.km;
-  document.getElementById('m-photo-data').value = '';
+  const previewWrap = document.getElementById('m-photo-preview-wrap');
+  const previewImg = document.getElementById('m-photo-preview');
+
+  if (editId) {
+    const m = (car.maintenances || []).find(item => item.id === editId);
+    if (!m) return;
+    document.getElementById('modal-maint-title').textContent = 'Modifica Intervento';
+    document.getElementById('m-id').value = m.id;
+    document.getElementById('m-title').value = m.title || '';
+    document.getElementById('m-date').value = m.date || '';
+    document.getElementById('m-km').value = m.km || car.km;
+    const catSelect = document.getElementById('m-cat');
+    if ([...catSelect.options].some(o => o.value === m.category)) {
+      catSelect.value = m.category;
+    }
+    document.getElementById('m-cost').value = m.cost || '';
+    document.getElementById('m-notes').value = m.notes || '';
+    document.getElementById('m-photo-data').value = m.photo || '';
+    if (m.photo) {
+      previewImg.src = m.photo;
+      previewWrap.style.display = 'block';
+    } else {
+      previewWrap.style.display = 'none';
+    }
+  } else {
+    document.getElementById('modal-maint-title').textContent = 'Registra Intervento';
+    document.getElementById('m-id').value = '';
+    document.getElementById('m-date').value = new Date().toISOString().split('T')[0];
+    document.getElementById('m-km').value = car.km;
+    document.getElementById('m-photo-data').value = '';
+    previewWrap.style.display = 'none';
+  }
   openModal('modal-maint');
+}
+
+function removeMaintPhoto() {
+  document.getElementById('m-photo').value = '';
+  document.getElementById('m-photo-data').value = '';
+  document.getElementById('m-photo-preview-wrap').style.display = 'none';
 }
 
 function handlePhoto(e) {
@@ -1989,7 +2032,10 @@ function handlePhoto(e) {
       canvas.width = img.width * scale;
       canvas.height = img.height * scale;
       canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-      document.getElementById('m-photo-data').value = canvas.toDataURL('image/jpeg', 0.6);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
+      document.getElementById('m-photo-data').value = dataUrl;
+      document.getElementById('m-photo-preview').src = dataUrl;
+      document.getElementById('m-photo-preview-wrap').style.display = 'block';
     };
     img.src = ev.target.result;
   };
@@ -1999,12 +2045,12 @@ function handlePhoto(e) {
 function saveMaint(e) {
   e.preventDefault();
   const car = state.cars.find(c => c.id === state.selectedCarId);
+  const editId = document.getElementById('m-id').value;
   const km = parseInt(document.getElementById('m-km').value, 10) || car.km;
   if (km > car.km) car.km = km;
 
   car.maintenances = car.maintenances || [];
-  car.maintenances.push({
-    id: 'm_' + Date.now(),
+  const maintData = {
     title: document.getElementById('m-title').value.trim(),
     date: document.getElementById('m-date').value,
     km,
@@ -2012,7 +2058,19 @@ function saveMaint(e) {
     cost: document.getElementById('m-cost').value,
     notes: document.getElementById('m-notes').value.trim(),
     photo: document.getElementById('m-photo-data').value || null
-  });
+  };
+
+  if (editId) {
+    const idx = car.maintenances.findIndex(item => item.id === editId);
+    if (idx > -1) {
+      car.maintenances[idx] = { ...car.maintenances[idx], ...maintData };
+    }
+  } else {
+    car.maintenances.push({
+      id: 'm_' + Date.now(),
+      ...maintData
+    });
+  }
   persist();
   closeModal('modal-maint');
   render();
