@@ -89,7 +89,8 @@
   .car-avatar-box img { width: 100%; height: 100%; object-fit: contain; }
   .car-avatar-box svg { width: 100%; height: 100%; }
   .car-info { flex: 1; min-width: 0; }
-  .car-name { font-size: 18px; font-weight: 800; margin: 0 0 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .car-name { font-size: 18px; font-weight: 800; margin: 0 0 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .car-sub-specs { font-size: 12px; color: var(--muted); margin-bottom: 7px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   
   /* Italian Plate */
   .plate {
@@ -124,9 +125,37 @@
   }
   .hero-avatar img { width: 100%; height: 100%; object-fit: contain; }
   .hero-avatar svg { width: 100%; height: 100%; }
+
+  /* Tech Specs Pills in Detail View */
+  .tech-specs-wrap {
+    margin-top: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+  }
+  .spec-pill {
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    color: #334155;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 9px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .spec-pill-model {
+    background: var(--primary-light);
+    border-color: #bfdbfe;
+    color: var(--primary);
+    font-weight: 700;
+  }
+
   .km-box {
     background: #f8fafc; border: 1px solid var(--border); border-radius: 14px; padding: 12px 14px;
-    display: flex; align-items: center; justify-content: space-between; margin-top: 12px;
+    display: flex; align-items: center; justify-content: space-between; margin-top: 14px;
   }
   .km-val { font-size: 20px; font-weight: 800; }
 
@@ -182,6 +211,34 @@
   }
   input:focus, select:focus, textarea:focus { outline: none; border-color: var(--primary); }
   .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+
+  /* PDF Scan Box in Modal */
+  .scan-box {
+    background: #eff6ff;
+    border: 1.5px dashed #93c5fd;
+    border-radius: 14px;
+    padding: 12px 14px;
+    margin-bottom: 14px;
+    text-align: center;
+  }
+  .scan-box-title {
+    font-size: 13.5px;
+    font-weight: 800;
+    color: #1e40af;
+    margin-bottom: 4px;
+  }
+  .scan-box-desc {
+    font-size: 12px;
+    color: #3b82f6;
+    margin-bottom: 10px;
+  }
+  .scan-status {
+    font-size: 12px;
+    font-weight: 600;
+    margin-top: 8px;
+    display: none;
+  }
 
   /* Color Swatches */
   .swatches { display: flex; flex-wrap: wrap; gap: 10px; }
@@ -197,7 +254,7 @@
     border: 1px solid var(--border); border-radius: 16px; padding: 10px;
     display: flex; flex-direction: column; align-items: center; margin-bottom: 14px;
   }
-  .preview-box #car-svg-preview { width: 250px; height: 128px; display: flex; align-items: center; justify-content: center; }
+  .preview-box #car-svg-preview { width: 250px; height: 120px; display: flex; align-items: center; justify-content: center; }
   .preview-box #car-svg-preview img { width: 100%; height: 100%; object-fit: contain; border-radius: 10px; }
   .preview-box #car-svg-preview svg { width: 100%; height: 100%; }
 
@@ -267,14 +324,43 @@
         <span style="font-size:11px; color:#6b7280; margin-top:4px;">Simbolo veicolo nel garage</span>
       </div>
 
+      <!-- SCANSIONE LIBRETTO PDF / IMMAGINE -->
+      <div class="scan-box">
+        <div class="scan-box-title">📄 Compila da Libretto / Documento Unico</div>
+        <div class="scan-box-desc">Carica il PDF (o foto) del libretto per estrarre targa, modello esatto, cilindrata, alimentazione e potenza</div>
+        <input type="file" id="libretto-file" accept=".pdf,application/pdf,image/*" style="display:none" onchange="scanLibrettoFile(event)">
+        <button type="button" class="btn btn-primary btn-sm" onclick="document.getElementById('libretto-file').click()">📎 Seleziona PDF o Foto Libretto</button>
+        <div id="scan-status" class="scan-status"></div>
+      </div>
+
       <div class="form-group">
-        <label>Marca e Modello *</label>
+        <label>Marca e Modello Principale *</label>
         <input type="text" id="car-name" placeholder="Es. Dacia Sandero, Renault Kadjar..." required oninput="autoDetectCar(this.value)">
+      </div>
+
+      <div class="form-group">
+        <label>Modello Esatto / Allestimento (D.3)</label>
+        <input type="text" id="car-exact-model" placeholder="Es. 1.0 TCe 90 CV Expression / 1.5 Blue dCi">
+      </div>
+
+      <div class="row-3">
+        <div class="form-group">
+          <label>Cilindrata (P.1)</label>
+          <input type="text" id="car-displacement" placeholder="Es. 999 cc">
+        </div>
+        <div class="form-group">
+          <label>Alimentazione (P.3)</label>
+          <input type="text" id="car-fuel" placeholder="Es. Benzina / Diesel">
+        </div>
+        <div class="form-group">
+          <label>Potenza (P.2)</label>
+          <input type="text" id="car-power" placeholder="Es. 67 kW (91 CV)">
+        </div>
       </div>
 
       <div class="row-2">
         <div class="form-group">
-          <label>Simbolo / Modello</label>
+          <label>Simbolo / Sagoma</label>
           <select id="car-shape" onchange="onShapeChange()">
             <option value="sandero">Dacia Sandero (Foto)</option>
             <option value="kadjar">Renault Kadjar (Foto)</option>
@@ -285,7 +371,7 @@
           </select>
         </div>
         <div class="form-group">
-          <label>Targa</label>
+          <label>Targa (A)</label>
           <input type="text" id="car-plate" placeholder="AB 123 CD" style="text-transform:uppercase;">
         </div>
       </div>
@@ -302,7 +388,7 @@
           <input type="number" id="car-km" placeholder="Es. 65000" required min="0">
         </div>
         <div class="form-group">
-          <label>Anno Immatricolazione</label>
+          <label>Anno Immatricolazione (B)</label>
           <input type="number" id="car-year" placeholder="Es. 2021" min="1970" max="2030">
         </div>
       </div>
@@ -434,7 +520,7 @@ let state = {
   updatedAt: 0,
   selectedCarId: null,
   activeTab: 'deadlines',
-  syncStatus: 'off', // 'off' | 'ok' | 'ing' | 'err'
+  syncStatus: 'off',
   syncText: 'Solo locale'
 };
 
@@ -480,6 +566,237 @@ function persist(pushCloud = true) {
   if (pushCloud && syncConfig.token) {
     pushToGist();
   }
+}
+
+/* ================= PDF & DOCUMENT LIBRETTO PARSER ================= */
+let pdfJsLoaded = false;
+function loadPdfJs() {
+  return new Promise((resolve, reject) => {
+    if (pdfJsLoaded || window.pdfjsLib) {
+      pdfJsLoaded = true;
+      resolve(window.pdfjsLib);
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+    script.onload = () => {
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+      pdfJsLoaded = true;
+      resolve(window.pdfjsLib);
+    };
+    script.onerror = () => reject(new Error('Libreria PDF non caricabile offline'));
+    document.head.appendChild(script);
+  });
+}
+
+let tesseractLoaded = false;
+function loadTesseract() {
+  return new Promise((resolve, reject) => {
+    if (tesseractLoaded || window.Tesseract) {
+      tesseractLoaded = true;
+      resolve(window.Tesseract);
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+    script.onload = () => {
+      tesseractLoaded = true;
+      resolve(window.Tesseract);
+    };
+    script.onerror = () => reject(new Error('OCR non caricabile offline'));
+    document.head.appendChild(script);
+  });
+}
+
+async function scanLibrettoFile(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const statusEl = document.getElementById('scan-status');
+  statusEl.style.display = 'block';
+  statusEl.style.color = '#b45309';
+  statusEl.textContent = '⏳ Lettura documento in corso...';
+
+  try {
+    let fullText = '';
+
+    if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+      const pdfjsLib = await loadPdfJs();
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      const maxPages = Math.min(pdf.numPages, 3);
+
+      for (let i = 1; i <= maxPages; i++) {
+        const page = await pdf.getPage(i);
+        const textContent = await page.getTextContent();
+        const pageStr = textContent.items.map(item => item.str).join(' ');
+        fullText += pageStr + '\n';
+      }
+
+      // Se il PDF è una scansione senza testo selezionabile, usa OCR sulla prima pagina
+      if (fullText.replace(/\s+/g, '').length < 40) {
+        statusEl.textContent = '🔍 PDF scansionato rilevato, avvio riconoscimento testo (OCR)...';
+        const page = await pdf.getPage(1);
+        const viewport = page.getViewport({ scale: 2.0 });
+        const canvas = document.createElement('canvas');
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+        const Tesseract = await loadTesseract();
+        const res = await Tesseract.recognize(canvas, 'ita');
+        fullText = res.data.text || '';
+      }
+    } else if (file.type.startsWith('image/')) {
+      statusEl.textContent = '🔍 Analisi foto libretto con OCR (attendere qualche secondo)...';
+      const Tesseract = await loadTesseract();
+      const res = await Tesseract.recognize(file, 'ita');
+      fullText = res.data.text || '';
+    }
+
+    const extracted = parseItalianLibrettoText(fullText);
+    let foundCount = 0;
+
+    if (extracted.plate && !document.getElementById('car-plate').value) {
+      document.getElementById('car-plate').value = extracted.plate;
+      foundCount++;
+    } else if (extracted.plate) {
+      document.getElementById('car-plate').value = extracted.plate;
+      foundCount++;
+    }
+    if (extracted.brandModel) {
+      document.getElementById('car-name').value = extracted.brandModel;
+      autoDetectCar(extracted.brandModel);
+      foundCount++;
+    }
+    if (extracted.exactModel) {
+      document.getElementById('car-exact-model').value = extracted.exactModel;
+      foundCount++;
+    }
+    if (extracted.displacement) {
+      document.getElementById('car-displacement').value = extracted.displacement;
+      foundCount++;
+    }
+    if (extracted.fuel) {
+      document.getElementById('car-fuel').value = extracted.fuel;
+      foundCount++;
+    }
+    if (extracted.power) {
+      document.getElementById('car-power').value = extracted.power;
+      foundCount++;
+    }
+    if (extracted.year) {
+      document.getElementById('car-year').value = extracted.year;
+      foundCount++;
+    }
+
+    if (foundCount > 0) {
+      statusEl.style.color = '#15803d';
+      statusEl.textContent = `✓ Acquisiti ${foundCount} campi dal libretto! Controlla e salva.`;
+    } else {
+      statusEl.style.color = '#b45309';
+      statusEl.textContent = '⚠️ Documento letto ma campi non riconosciuti automaticamente: compilali manualmente qui sotto.';
+    }
+  } catch (err) {
+    console.error(err);
+    statusEl.style.color = '#b91c1c';
+    statusEl.textContent = '✗ Errore durante la lettura del file. Verifica la connessione o inserisci i dati a mano.';
+  }
+  e.target.value = '';
+}
+
+function parseItalianLibrettoText(raw) {
+  const text = raw.replace(/\s+/g, ' ').trim();
+  const upper = text.toUpperCase();
+  const result = {
+    plate: '',
+    brandModel: '',
+    exactModel: '',
+    displacement: '',
+    fuel: '',
+    power: '',
+    year: ''
+  };
+
+  // 1. Targa italiana (es. AB 123 CD o AB123CD)
+  const plateMatch = upper.match(/\b([A-Z]{2}\s?[0-9]{3}\s?[A-Z]{2})\b/);
+  if (plateMatch) {
+    const cleanP = plateMatch[1].replace(/\s+/g, '');
+    result.plate = `${cleanP.slice(0,2)} ${cleanP.slice(2,5)} ${cleanP.slice(5,7)}`;
+  }
+
+  // 2. Anno prima immatricolazione (B)
+  const dateMatch = text.match(/\b(0?[1-9]|[12][0-9]|3[01])[\/\.\-](0?[1-9]|1[012])[\/\.\-](199\d|20[0-2]\d)\b/);
+  if (dateMatch) {
+    result.year = dateMatch[3];
+  }
+
+  // 3. Cilindrata P.1 (es. (P.1) 1461 o 999 cm3 / cc)
+  const p1Match = upper.match(/\(?P\.?1\)?\s*[:\-]?\s*([0-9]{3,4})\b/) || upper.match(/\b([0-9]{3,4})\s*(?:CM3|CC)\b/);
+  if (p1Match) {
+    result.displacement = `${p1Match[1]} cc`;
+  }
+
+  // 4. Potenza P.2 (es. (P.2) 81,00 o 67 kW)
+  const p2Match = upper.match(/\(?P\.?2\)?\s*[:\-]?\s*([0-9]{2,3}(?:[\.,][0-9]{1,2})?)\b/) || upper.match(/\b([0-9]{2,3}(?:[\.,][0-9]{1,2})?)\s*KW\b/);
+  if (p2Match) {
+    const kwVal = parseFloat(p2Match[1].replace(',', '.'));
+    if (!isNaN(kwVal) && kwVal > 15 && kwVal < 600) {
+      const cvVal = Math.round(kwVal * 1.35962);
+      result.power = `${Math.round(kwVal)} kW (${cvVal} CV)`;
+    }
+  }
+
+  // 5. Alimentazione P.3
+  if (/\bGASOLIO\b|\bDIESEL\b/.test(upper)) {
+    result.fuel = /IBRID|HYBRID|ELETTR/.test(upper) ? 'Ibrido Diesel' : 'Diesel';
+  } else if (/\bBENZINA\b/.test(upper)) {
+    if (/GPL|G\.P\.L/.test(upper)) result.fuel = 'Benzina / GPL';
+    else if (/METANO|CNG/.test(upper)) result.fuel = 'Benzina / Metano';
+    else if (/IBRID|HYBRID|ELETTR/.test(upper)) result.fuel = 'Ibrido Benzina';
+    else result.fuel = 'Benzina';
+  } else if (/\bELETTRIC/.test(upper)) {
+    result.fuel = 'Elettrica';
+  } else if (/\bIBRID|\bHYBRID/.test(upper)) {
+    result.fuel = 'Ibrida';
+  }
+
+  // 6. Marca (D.1) e Denominazione Commerciale / Modello Esatto (D.3)
+  const knownBrands = ['DACIA', 'RENAULT', 'FIAT', 'VOLKSWAGEN', 'FORD', 'PEUGEOT', 'CITROEN', 'OPEL', 'TOYOTA', 'HYUNDAI', 'KIA', 'AUDI', 'BMW', 'MERCEDES', 'JEEP', 'NISSAN', 'ALFA ROMEO', 'LANCIA', 'SEAT', 'SKODA', 'VOLVO', 'MAZDA', 'SUZUKI'];
+  let foundBrand = '';
+  for (const b of knownBrands) {
+    if (upper.includes(b)) {
+      foundBrand = b.charAt(0) + b.slice(1).toLowerCase();
+      if (b === 'BMW') foundBrand = 'BMW';
+      break;
+    }
+  }
+
+  const d3Match = text.match(/\(?D\.?3\)?\s*[:\-]?\s*([A-Za-z0-9\s\-\.\/]{3,42}?)(?=\s*\(?[A-Z]\.?[0-9]|\s+J\b|\s+K\b|\s+P\.?1|$)/i);
+  if (d3Match) {
+    const cleanD3 = d3Match[1].replace(/\s+/g, ' ').trim();
+    result.exactModel = cleanD3;
+    if (foundBrand) {
+      const firstWord = cleanD3.split(' ')[0];
+      result.brandModel = cleanD3.toUpperCase().startsWith(foundBrand.toUpperCase())
+        ? cleanD3.split(' ').slice(0, 2).join(' ')
+        : `${foundBrand} ${firstWord}`;
+    } else {
+      result.brandModel = cleanD3.split(' ').slice(0, 2).join(' ');
+    }
+  } else if (foundBrand) {
+    if (upper.includes('SANDERO')) {
+      result.brandModel = 'Dacia Sandero';
+      const sanderoVar = text.match(/(SANDERO\s+[A-Za-z0-9\s\.\-]{2,28})/i);
+      if (sanderoVar) result.exactModel = sanderoVar[1].trim();
+    } else if (upper.includes('KADJAR')) {
+      result.brandModel = 'Renault Kadjar';
+      const kadjarVar = text.match(/(KADJAR\s+[A-Za-z0-9\s\.\-]{2,28})/i);
+      if (kadjarVar) result.exactModel = kadjarVar[1].trim();
+    } else {
+      result.brandModel = foundBrand;
+    }
+  }
+
+  return result;
 }
 
 /* ================= GITHUB GIST SYNC ENGINE ================= */
@@ -638,7 +955,6 @@ function disconnectSync() {
   render();
 }
 
-// Auto-sync when returning to app (switching between iPhone/iPad or reopening)
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible' && syncConfig.token && syncConfig.gistId) {
     pullFromGist(false);
@@ -762,6 +1078,38 @@ function escapeHtml(str) {
   return String(str || '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 }
 
+function renderTechSpecsPills(car) {
+  const pills = [];
+  if (car.exactModel) {
+    pills.push(`<span class="spec-pill spec-pill-model">${escapeHtml(car.exactModel)}</span>`);
+  }
+  if (car.displacement) {
+    pills.push(`<span class="spec-pill">⚙️ ${escapeHtml(car.displacement)}</span>`);
+  }
+  if (car.fuel) {
+    pills.push(`<span class="spec-pill">⛽ ${escapeHtml(car.fuel)}</span>`);
+  }
+  if (car.power) {
+    pills.push(`<span class="spec-pill">⚡ ${escapeHtml(car.power)}</span>`);
+  }
+  if (car.year) {
+    pills.push(`<span class="spec-pill">📅 ${escapeHtml(car.year)}</span>`);
+  }
+  if (pills.length === 0) {
+    return `<div style="font-size:12.5px; color:var(--muted); margin-top:4px;">Tocca "Modifica" in alto per scansionare il libretto</div>`;
+  }
+  return `<div class="tech-specs-wrap">${pills.join('')}</div>`;
+}
+
+function renderGarageSubLine(car) {
+  const parts = [];
+  if (car.exactModel) parts.push(car.exactModel);
+  if (car.fuel) parts.push(car.fuel);
+  if (car.power) parts.push(car.power);
+  if (parts.length === 0) return '';
+  return `<div class="car-sub-specs">${escapeHtml(parts.join(' • '))}</div>`;
+}
+
 function renderHeaderOnly() {
   const header = document.getElementById('app-header');
   if (!state.selectedCarId) {
@@ -801,7 +1149,7 @@ function render() {
         <div class="empty-garage">
           <div class="empty-icon">🚗</div>
           <h2>Il tuo garage è vuoto</h2>
-          <p>Aggiungi la tua auto oppure collega il tuo <b>GitHub Cloud</b> per scaricare i veicoli già salvati sull'altro dispositivo.</p>
+          <p>Aggiungi la tua auto (puoi anche caricare il PDF del libretto) oppure collega <b>GitHub Cloud</b> per sincronizzare.</p>
           <button class="btn btn-primary btn-block" onclick="openCarModal()">+ Aggiungi la prima auto</button>
           <button class="btn btn-secondary btn-block" style="margin-top:10px;" onclick="openSyncModal()">☁️ Collega Sync GitHub (iPhone / iPad)</button>
         </div>
@@ -816,6 +1164,7 @@ function render() {
           <div class="car-card-top">
             <div class="car-info">
               <div class="car-name">${escapeHtml(car.name)}</div>
+              ${renderGarageSubLine(car)}
               <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
                 ${renderPlate(car.plate)}
                 ${car.year ? `<span style="font-size:12px; color:var(--muted);">${car.year}</span>` : ''}
@@ -847,12 +1196,14 @@ function render() {
     let html = `
       <div class="hero-card">
         <div class="hero-avatar">${getCarVisual(car.shape, car.color)}</div>
-        <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
-          <div>
-            <div style="font-size:20px; font-weight:800;">${escapeHtml(car.name)}</div>
-            <div style="font-size:13px; color:var(--muted);">${car.year ? 'Anno ' + car.year : 'Veicolo registrato'}</div>
+        <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:10px;">
+          <div style="flex:1; min-width:0;">
+            <div style="font-size:21px; font-weight:800; line-height:1.2;">${escapeHtml(car.name)}</div>
+            ${renderTechSpecsPills(car)}
           </div>
-          ${renderPlate(car.plate)}
+          <div style="flex-shrink:0; padding-top:2px;">
+            ${renderPlate(car.plate)}
+          </div>
         </div>
         <div class="km-box">
           <div>
@@ -999,11 +1350,19 @@ function autoDetectCar(val) {
 
 function openCarModal(editId = null) {
   document.getElementById('form-car').reset();
+  const statusEl = document.getElementById('scan-status');
+  statusEl.style.display = 'none';
+  statusEl.textContent = '';
+
   if (editId) {
     const car = state.cars.find(c => c.id === editId);
     document.getElementById('modal-car-title').textContent = 'Modifica Veicolo';
     document.getElementById('car-id').value = car.id;
     document.getElementById('car-name').value = car.name;
+    document.getElementById('car-exact-model').value = car.exactModel || '';
+    document.getElementById('car-displacement').value = car.displacement || '';
+    document.getElementById('car-fuel').value = car.fuel || '';
+    document.getElementById('car-power').value = car.power || '';
     document.getElementById('car-shape').value = car.shape || 'sandero';
     document.getElementById('car-plate').value = car.plate || '';
     document.getElementById('car-km').value = car.km;
@@ -1025,6 +1384,10 @@ function saveCar(e) {
   const id = document.getElementById('car-id').value;
   const data = {
     name: document.getElementById('car-name').value.trim(),
+    exactModel: document.getElementById('car-exact-model').value.trim(),
+    displacement: document.getElementById('car-displacement').value.trim(),
+    fuel: document.getElementById('car-fuel').value.trim(),
+    power: document.getElementById('car-power').value.trim(),
     shape: document.getElementById('car-shape').value,
     plate: document.getElementById('car-plate').value.trim().toUpperCase(),
     color: document.getElementById('car-color').value,
