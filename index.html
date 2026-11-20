@@ -1221,19 +1221,45 @@ function updateRCAStipula(val) {
 function renderRCABlock(car) {
   const rca = computeRCAStatus(car);
   let badgeHtml = `<span class="badge" style="background:#f1f5f9; color:#64748b;">Data mancante</span>`;
-  let subInfoHtml = `Inserisci la data di <b>ultima stipula</b> qui sotto (durata 1 anno esatto).`;
+  let expiryHighlightHtml = '';
 
   if (rca) {
+    const expStr = new Date(rca.expiryISO + 'T00:00:00').toLocaleDateString('it-IT');
     if (rca.isAttiva) {
       badgeHtml = `<span class="badge badge-ok">Attiva</span>`;
-      const expStr = new Date(rca.expiryISO + 'T00:00:00').toLocaleDateString('it-IT');
-      const remTxt = rca.diffDays === 0 ? 'Scade oggi' : `Scade il <b>${expStr}</b> (tra ${rca.diffDays} gg)`;
-      subInfoHtml = `Copertura valida • ${remTxt}`;
+      const remTxt = rca.diffDays === 0 ? 'Scade oggi' : `Tra ${rca.diffDays} giorni`;
+      const isSoon = rca.diffDays <= 30;
+      expiryHighlightHtml = `
+        <div class="rev-subrow" style="background:${isSoon ? 'var(--warn-bg)' : 'var(--ok-bg)'}; border-color:${isSoon ? '#fcd34d' : '#86efac'}; margin-bottom:8px;">
+          <div>
+            <div class="rev-subrow-label" style="color:${isSoon ? 'var(--warn-txt)' : 'var(--ok-txt)'}; font-size:13.5px;">Scadenza RCA</div>
+            <div class="rev-subrow-sub" style="color:${isSoon ? 'var(--warn-txt)' : 'var(--ok-txt)'}; font-weight:600;">${remTxt}</div>
+          </div>
+          <div style="font-size:16px; font-weight:900; color:${isSoon ? 'var(--warn-txt)' : 'var(--ok-txt)'}; letter-spacing:0.2px;">
+            ${expStr}
+          </div>
+        </div>
+      `;
     } else {
       badgeHtml = `<span class="badge badge-bad">Non Attiva</span>`;
-      const expStr = new Date(rca.expiryISO + 'T00:00:00').toLocaleDateString('it-IT');
-      subInfoHtml = `Polizza scaduta il <b>${expStr}</b> (da ${Math.abs(rca.diffDays)} gg)`;
+      expiryHighlightHtml = `
+        <div class="rev-subrow" style="background:var(--bad-bg); border-color:#fca5a5; margin-bottom:8px;">
+          <div>
+            <div class="rev-subrow-label" style="color:var(--bad-txt); font-size:13.5px;">Scadenza RCA</div>
+            <div class="rev-subrow-sub" style="color:var(--bad-txt); font-weight:600;">Scaduta da ${Math.abs(rca.diffDays)} giorni</div>
+          </div>
+          <div style="font-size:16px; font-weight:900; color:var(--bad-txt); letter-spacing:0.2px;">
+            ${expStr}
+          </div>
+        </div>
+      `;
     }
+  } else {
+    expiryHighlightHtml = `
+      <div style="font-size:12px; color:var(--muted); margin-bottom:8px;">
+        Inserisci la data di <b>ultima stipula</b> qui sotto per calcolare la scadenza annuale.
+      </div>
+    `;
   }
 
   return `
@@ -1242,10 +1268,8 @@ function renderRCABlock(car) {
         <div class="revisione-title">📄 RCA</div>
         ${badgeHtml}
       </div>
-      <div style="font-size:12px; color:var(--muted); margin-bottom:8px;">
-        ${subInfoHtml}
-      </div>
-      <div class="rev-subrow ${rca && rca.isAttiva ? 'active-rev' : ''}" style="flex-wrap:wrap;">
+      ${expiryHighlightHtml}
+      <div class="rev-subrow" style="flex-wrap:wrap;">
         <div style="flex:1; min-width:130px;">
           <div class="rev-subrow-label">Ultima stipula</div>
           <div class="rev-subrow-sub">Durata 1 anno esatto</div>
@@ -1536,9 +1560,7 @@ function render() {
         ${renderRevisioneBlock(car)}
         ${renderRCABlock(car)}
       `;
-      if (!car.deadlines || car.deadlines.length === 0) {
-        html += `<div class="item-card" style="text-align:center; color:var(--muted); padding:20px;">Nessun'altra scadenza aggiuntiva.<br>Usa "+ Scadenza" per bollo, assicurazione RCA o tagliandi.</div>`;
-      } else {
+      if (car.deadlines && car.deadlines.length > 0) {
         html += car.deadlines.map(dl => {
           const st = getDeadlineStatus(dl, car.km);
           return `
