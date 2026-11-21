@@ -445,14 +445,18 @@
         </div>
       </div>
 
+      <div class="form-group">
+        <label>Gomme Montate (Marca/Modello)</label>
+        <input type="text" id="car-tire-model" placeholder="Es. Michelin CrossClimate 2">
+      </div>
       <div class="row-2">
-        <div class="form-group">
-          <label>Gomme Montate (Marca/Modello)</label>
-          <input type="text" id="car-tire-model" placeholder="Es. Michelin CrossClimate 2">
-        </div>
         <div class="form-group">
           <label>Data Montaggio Gomme</label>
           <input type="date" id="car-tire-date">
+        </div>
+        <div class="form-group">
+          <label>Km Montaggio Gomme</label>
+          <input type="number" id="car-tire-km" placeholder="Es. 58000" min="0">
         </div>
       </div>
 
@@ -1543,9 +1547,12 @@ function renderTechSpecsPills(car) {
   if (car.year) {
     pills.push(`<span class="spec-pill">📅 ${escapeHtml(car.year)}</span>`);
   }
-  if (car.tireModel || car.tireDate) {
-    const tDateStr = car.tireDate ? ` (${new Date(car.tireDate + 'T00:00:00').toLocaleDateString('it-IT')})` : '';
-    pills.push(`<span class="spec-pill">🛞 ${escapeHtml(car.tireModel || 'Gomme')}${tDateStr}</span>`);
+  if (car.tireModel || car.tireDate || car.tireKm) {
+    const subParts = [];
+    if (car.tireDate) subParts.push(new Date(car.tireDate + 'T00:00:00').toLocaleDateString('it-IT'));
+    if (car.tireKm) subParts.push(`${Number(car.tireKm).toLocaleString('it-IT')} km`);
+    const extraStr = subParts.length ? ` (${subParts.join(' • ')})` : '';
+    pills.push(`<span class="spec-pill">🛞 ${escapeHtml(car.tireModel || 'Gomme')}${extraStr}</span>`);
   }
   if (pills.length === 0) {
     return `<div style="font-size:12.5px; color:var(--muted); margin-top:4px;">Tocca "Modifica" in alto per scansionare il libretto</div>`;
@@ -1631,14 +1638,22 @@ function render() {
           <div class="car-tires-bar" onclick="event.stopPropagation()">
             <div style="font-size:11px; font-weight:800; color:var(--muted); text-transform:uppercase; letter-spacing:0.3px;">🛞 Pneumatici montati</div>
             <div class="car-tires-row">
-              <input type="text" class="tire-input" style="flex:1; min-width:145px;"
+              <input type="text" class="tire-input" style="flex:1 1 100%;"
                      placeholder="Marca e modello gomme..."
                      value="${escapeHtml(car.tireModel || '')}"
                      onchange="updateCarTires('${car.id}', 'tireModel', this.value)">
-              <input type="date" class="tire-input" style="width:auto; max-width:142px; flex-shrink:0;"
+            </div>
+            <div class="car-tires-row">
+              <input type="date" class="tire-input" style="flex:1; min-width:130px;"
                      title="Data montaggio gomme"
                      value="${escapeHtml(car.tireDate || '')}"
                      onchange="updateCarTires('${car.id}', 'tireDate', this.value)">
+              <input type="number" class="tire-input" style="flex:1; min-width:105px;"
+                     placeholder="Km montaggio..."
+                     title="Km al montaggio gomme"
+                     min="0"
+                     value="${escapeHtml(car.tireKm || '')}"
+                     onchange="updateCarTires('${car.id}', 'tireKm', this.value)">
             </div>
           </div>
         </div>
@@ -1850,6 +1865,7 @@ function openCarModal(editId = null) {
     document.getElementById('car-reg-date').value = car.regDate || '';
     document.getElementById('car-tire-model').value = car.tireModel || '';
     document.getElementById('car-tire-date').value = car.tireDate || '';
+    document.getElementById('car-tire-km').value = car.tireKm || '';
     selectColor(car.color || '#f8fafc');
     onShapeChange();
   } else {
@@ -1878,7 +1894,8 @@ function saveCar(e) {
     regDate: document.getElementById('car-reg-date').value.trim(),
     year: (document.getElementById('car-reg-date').value.trim().slice(0, 4)) || document.getElementById('car-year').value.trim(),
     tireModel: document.getElementById('car-tire-model').value.trim(),
-    tireDate: document.getElementById('car-tire-date').value.trim()
+    tireDate: document.getElementById('car-tire-date').value.trim(),
+    tireKm: document.getElementById('car-tire-km').value.trim()
   };
 
   if (id) {
