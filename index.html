@@ -389,9 +389,20 @@
         <input type="text" id="car-name" placeholder="Es. Dacia Sandero, Renault Kadjar..." required oninput="autoDetectCar(this.value)">
       </div>
 
-      <div class="form-group">
-        <label>Tipo / Variante / Versione (D.2 / D.3)</label>
-        <input type="text" id="car-exact-model" placeholder="Es. 1.0 TCe 90 CV Expression / 1.5 Blue dCi">
+      <div class="row-2">
+        <div class="form-group">
+          <label>Allestimento</label>
+          <input type="text" id="car-trim" placeholder="Es. Expression, Intens, Stepway...">
+        </div>
+        <div class="form-group">
+          <label>Carta di Circolazione</label>
+          <input type="file" id="car-reg-doc-file" accept=".pdf,application/pdf,image/*" style="display:none" onchange="handleRegDocUpload(event, false)">
+          <button type="button" id="car-reg-doc-btn" class="btn btn-secondary" style="width:100%; height:44px; font-size:13px; border:1.5px solid var(--border); justify-content:center;" onclick="document.getElementById('car-reg-doc-file').click()">
+            📄 Carta di Circolazione
+          </button>
+          <input type="hidden" id="car-reg-doc-data">
+          <input type="hidden" id="car-reg-doc-name">
+        </div>
       </div>
 
       <div class="row-3">
@@ -561,6 +572,21 @@
       </div>
       <button type="submit" class="btn btn-primary btn-block">Salva nel Libretto</button>
     </form>
+  </div>
+</div>
+
+<!-- MODAL VISUALIZZA CARTA DI CIRCOLAZIONE -->
+<div class="modal-backdrop" id="modal-regdoc">
+  <div class="modal" style="max-width:640px;">
+    <div class="modal-head">
+      <h3>Carta di Circolazione</h3>
+      <button class="close-btn" onclick="closeModal('modal-regdoc')">&times;</button>
+    </div>
+    <div id="regdoc-viewer-body" style="text-align:center;"></div>
+    <div style="margin-top:14px; display:flex; gap:8px; justify-content:space-between; flex-wrap:wrap;">
+      <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('detail-regdoc-file').click()">🔄 Sostituisci documento</button>
+      <button type="button" class="btn btn-danger btn-sm" onclick="deleteRegDoc()">🗑️ Rimuovi documento</button>
+    </div>
   </div>
 </div>
 
@@ -753,10 +779,7 @@ async function scanLibrettoFile(e) {
       autoDetectCar(extracted.brandModel);
       foundCount++;
     }
-    if (extracted.exactModel) {
-      document.getElementById('car-exact-model').value = extracted.exactModel;
-      foundCount++;
-    }
+    // Tipo/Variante/Versione non più compilato automaticamente; Allestimento resta a compilazione libera
     if (extracted.displacement) {
       document.getElementById('car-displacement').value = extracted.displacement;
       foundCount++;
@@ -1667,9 +1690,6 @@ function escapeHtml(str) {
 
 function renderTechSpecsPills(car) {
   const pills = [];
-  if (car.exactModel) {
-    pills.push(`<span class="spec-pill spec-pill-model">${escapeHtml(car.exactModel)}</span>`);
-  }
   if (car.displacement) {
     pills.push(`<span class="spec-pill">⚙️ ${escapeHtml(car.displacement)}</span>`);
   }
@@ -1689,15 +1709,13 @@ function renderTechSpecsPills(car) {
     const extraStr = subParts.length ? ` (${subParts.join(' • ')})` : '';
     pills.push(`<span class="spec-pill">🛞 ${escapeHtml(car.tireModel || 'Gomme')}${extraStr}</span>`);
   }
-  if (pills.length === 0) {
-    return `<div style="font-size:12.5px; color:var(--muted); margin-top:4px;">Tocca "Modifica" in alto per scansionare il libretto</div>`;
-  }
+  if (pills.length === 0) return '';
   return `<div class="tech-specs-wrap">${pills.join('')}</div>`;
 }
 
 function renderGarageSubLine(car) {
   const parts = [];
-  if (car.exactModel) parts.push(car.exactModel);
+  if (car.trim) parts.push(car.trim);
   if (car.fuel) parts.push(car.fuel);
   if (car.power) parts.push(car.power);
   if (parts.length === 0) return '';
@@ -1814,12 +1832,33 @@ function render() {
         <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:10px;">
           <div style="flex:1; min-width:0;">
             <div style="font-size:21px; font-weight:800; line-height:1.2;">${escapeHtml(car.name)}</div>
-            ${renderTechSpecsPills(car)}
           </div>
           <div style="flex-shrink:0; padding-top:2px;">
             ${renderPlate(car.plate)}
           </div>
         </div>
+        <div style="margin-top:10px; display:flex; align-items:stretch; gap:8px; flex-wrap:wrap;">
+          <div style="flex:1; min-width:140px; background:#f8fafc; border:1px solid var(--border); border-radius:12px; padding:7px 10px;">
+            <div style="font-size:10.5px; font-weight:800; color:var(--muted); text-transform:uppercase; letter-spacing:0.3px; margin-bottom:2px;">Allestimento</div>
+            <input type="text" value="${escapeHtml(car.trim || '')}" placeholder="Inserisci allestimento..."
+                   onchange="updateCarTrim(this.value)"
+                   style="padding:3px 0; font-size:13.5px; font-weight:700; border:none; background:transparent; border-radius:0; width:100%; color:var(--text);">
+          </div>
+          <div style="flex:1; min-width:155px; display:flex; align-items:center;">
+            <input type="file" id="detail-regdoc-file" accept=".pdf,application/pdf,image/*" style="display:none" onchange="handleRegDocUpload(event, true)">
+            ${car.regDocData
+              ? `<button type="button" class="btn btn-primary" style="width:100%; height:100%; min-height:46px; font-size:13px; border-radius:12px; flex-direction:column; gap:2px; padding:7px 10px;" onclick="openRegDocModal()">
+                   <span>📄 Carta di Circolazione</span>
+                   <span style="font-size:10.5px; font-weight:500; opacity:0.9;">Tocca per visualizzare</span>
+                 </button>`
+              : `<button type="button" class="btn btn-secondary" style="width:100%; height:100%; min-height:46px; font-size:13px; border-radius:12px; border:1.5px dashed #93c5fd; background:#eff6ff; color:var(--primary); flex-direction:column; gap:2px; padding:7px 10px;" onclick="document.getElementById('detail-regdoc-file').click()">
+                   <span>📄 Carta di Circolazione</span>
+                   <span style="font-size:10.5px; font-weight:600; color:#3b82f6;">Tocca per caricare</span>
+                 </button>`
+            }
+          </div>
+        </div>
+        ${renderTechSpecsPills(car)}
         <div class="km-box">
           <div>
             <div style="font-size:11px; color:var(--muted); text-transform:uppercase; font-weight:700;">Chilometraggio</div>
@@ -1918,6 +1957,111 @@ function render() {
 }
 
 /* Navigation */
+function updateCarTrim(val) {
+  const car = state.cars.find(c => c.id === state.selectedCarId);
+  if (!car) return;
+  car.trim = val ? val.trim() : '';
+  persist();
+}
+
+function updateRegDocModalBtn(hasDoc) {
+  const btn = document.getElementById('car-reg-doc-btn');
+  if (!btn) return;
+  if (hasDoc) {
+    btn.className = 'btn btn-primary';
+    btn.innerHTML = '✓ Carta Caricata';
+  } else {
+    btn.className = 'btn btn-secondary';
+    btn.innerHTML = '📄 Carta di Circolazione';
+  }
+}
+
+function handleRegDocUpload(e, isDetailView = false) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const applyDoc = (dataUrl, fileName) => {
+    if (isDetailView) {
+      const car = state.cars.find(c => c.id === state.selectedCarId);
+      if (!car) return;
+      car.regDocData = dataUrl;
+      car.regDocName = fileName;
+      persist();
+      render();
+      if (document.getElementById('modal-regdoc').classList.contains('open')) {
+        openRegDocModal();
+      }
+    } else {
+      document.getElementById('car-reg-doc-data').value = dataUrl;
+      document.getElementById('car-reg-doc-name').value = fileName;
+      updateRegDocModalBtn(true);
+    }
+  };
+
+  if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+    if (file.size > 3.5 * 1024 * 1024) {
+      alert('Il PDF supera 3.5 MB. Usa un PDF più leggero o una foto per sincronizzarlo velocemente.');
+      e.target.value = '';
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = function(ev) {
+      applyDoc(ev.target.result, file.name || 'carta-di-circolazione.pdf');
+    };
+    reader.readAsDataURL(file);
+  } else if (file.type.startsWith('image/')) {
+    const reader = new FileReader();
+    reader.onload = function(ev) {
+      const img = new Image();
+      img.onload = function() {
+        const canvas = document.createElement('canvas');
+        const maxW = 1200;
+        const scale = Math.min(1, maxW / img.width);
+        canvas.width = img.width * scale;
+        canvas.height = img.height * scale;
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        applyDoc(canvas.toDataURL('image/jpeg', 0.72), file.name || 'carta-di-circolazione.jpg');
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  } else {
+    alert('Formato non supportato. Carica un PDF o una foto.');
+  }
+  e.target.value = '';
+}
+
+function openRegDocModal() {
+  const car = state.cars.find(c => c.id === state.selectedCarId);
+  if (!car || !car.regDocData) return;
+  const body = document.getElementById('regdoc-viewer-body');
+  const isPdf = car.regDocData.startsWith('data:application/pdf');
+  if (isPdf) {
+    body.innerHTML = `
+      <iframe src="${car.regDocData}" style="width:100%; height:62vh; border:1px solid var(--border); border-radius:12px;"></iframe>
+      <div style="margin-top:8px;">
+        <a href="${car.regDocData}" download="${escapeHtml(car.regDocName || 'carta-di-circolazione.pdf')}" class="btn btn-primary btn-sm">📥 Scarica PDF</a>
+      </div>
+    `;
+  } else {
+    body.innerHTML = `
+      <img src="${car.regDocData}" style="width:100%; max-height:65vh; object-fit:contain; border-radius:12px; border:1px solid var(--border);" alt="Carta di Circolazione">
+    `;
+  }
+  openModal('modal-regdoc');
+}
+
+function deleteRegDoc() {
+  const car = state.cars.find(c => c.id === state.selectedCarId);
+  if (!car) return;
+  if (!confirm('Rimuovere la Carta di Circolazione allegata?')) return;
+  car.regDocData = null;
+  car.regDocName = null;
+  persist();
+  closeModal('modal-regdoc');
+  render();
+}
+
 function updateCarTires(carId, field, val) {
   const car = state.cars.find(c => c.id === carId);
   if (!car) return;
@@ -1989,7 +2133,10 @@ function openCarModal(editId = null) {
     document.getElementById('modal-car-title').textContent = 'Modifica Veicolo';
     document.getElementById('car-id').value = car.id;
     document.getElementById('car-name').value = car.name;
-    document.getElementById('car-exact-model').value = car.exactModel || '';
+    document.getElementById('car-trim').value = car.trim || '';
+    document.getElementById('car-reg-doc-data').value = car.regDocData || '';
+    document.getElementById('car-reg-doc-name').value = car.regDocName || '';
+    updateRegDocModalBtn(!!car.regDocData);
     document.getElementById('car-displacement').value = car.displacement || '';
     document.getElementById('car-fuel').value = car.fuel || '';
     document.getElementById('car-power').value = car.power || '';
@@ -2006,6 +2153,9 @@ function openCarModal(editId = null) {
   } else {
     document.getElementById('modal-car-title').textContent = 'Aggiungi Auto';
     document.getElementById('car-id').value = '';
+    document.getElementById('car-reg-doc-data').value = '';
+    document.getElementById('car-reg-doc-name').value = '';
+    updateRegDocModalBtn(false);
     document.getElementById('car-shape').value = 'sandero';
     selectColor('#f8fafc');
     onShapeChange();
@@ -2018,7 +2168,9 @@ function saveCar(e) {
   const id = document.getElementById('car-id').value;
   const data = {
     name: document.getElementById('car-name').value.trim(),
-    exactModel: document.getElementById('car-exact-model').value.trim(),
+    trim: document.getElementById('car-trim').value.trim(),
+    regDocData: document.getElementById('car-reg-doc-data').value || null,
+    regDocName: document.getElementById('car-reg-doc-name').value || null,
     displacement: document.getElementById('car-displacement').value.trim(),
     fuel: document.getElementById('car-fuel').value.trim(),
     power: document.getElementById('car-power').value.trim(),
