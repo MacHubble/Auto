@@ -564,6 +564,21 @@
   </div>
 </div>
 
+<!-- MODAL VISUALIZZA CERTIFICATO REVISIONE -->
+<div class="modal-backdrop" id="modal-cert">
+  <div class="modal" style="max-width:640px;">
+    <div class="modal-head">
+      <h3>Certificato Revisione</h3>
+      <button class="close-btn" onclick="closeModal('modal-cert')">&times;</button>
+    </div>
+    <div id="cert-viewer-body" style="text-align:center;"></div>
+    <div style="margin-top:14px; display:flex; gap:8px; justify-content:space-between; flex-wrap:wrap;">
+      <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('rev-cert-file').click()">🔄 Sostituisci documento</button>
+      <button type="button" class="btn btn-danger btn-sm" onclick="deleteRevCert()">🗑️ Rimuovi documento</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL AGGIORNA KM -->
 <div class="modal-backdrop" id="modal-km">
   <div class="modal">
@@ -1187,12 +1202,19 @@ function computeItalianRevisione(car) {
   today.setHours(0, 0, 0, 0);
   const primaRevDate = new Date(primaRevISO + 'T00:00:00');
 
+  const lastRevISO = car.lastRevisioneDate || '';
+  let hasLastRev = /^\d{4}-\d{2}-\d{2}$/.test(lastRevISO);
   let successivaRevISO = null;
   let activeTargetISO = primaRevISO;
 
-  // Se la prima revisione è scaduta (today > primaRevDate), compila la revisione successiva (+ 2 anni)
-  // Se anche quella +2 anni fosse già passata nel tempo, avanza a scatti di 2 anni fino alla scadenza attuale/futura
-  if (today > primaRevDate) {
+  if (hasLastRev) {
+    // Se inserita la data dell'ultima revisione effettuata:
+    // "successiva" = anno ultima revisione + 2 anni, mese di riferimento = mese di immatricolazione (B), fine mese
+    const lastYear = parseInt(lastRevISO.split('-')[0], 10);
+    successivaRevISO = endOfMonthISO(lastYear + 2, regMonth);
+    activeTargetISO = successivaRevISO;
+  } else if (today > primaRevDate) {
+    // Fallback automatico se non ancora compilata manualmente la data ultima revisione ma la prima è scaduta
     let nextYear = regYear + 4 + 2;
     let candidateISO = endOfMonthISO(nextYear, regMonth);
     let candidateDate = new Date(candidateISO + 'T00:00:00');
@@ -1207,10 +1229,103 @@ function computeItalianRevisione(car) {
 
   return {
     regDateISO: regDateStr,
+    regMonth,
     primaRevISO,
+    lastRevISO,
+    hasLastRev,
     successivaRevISO,
     activeTargetISO
   };
+}
+
+function updateLastRevisioneDate(val) {
+  const car = state.cars.find(c => c.id === state.selectedCarId);
+  if (!car) return;
+  car.lastRevisioneDate = val ? val.trim() : '';
+  persist();
+  render();
+}
+
+function handleRevCertUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const car = state.cars.find(c => c.id === state.selectedCarId);
+  if (!car) return;
+
+  if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+    if (file.size > 3.5 * 1024 * 1024) {
+      alert('Il PDF supera 3.5 MB. Per sincronizzarlo su iPhone/iPad senza rallentamenti, usa un PDF più leggero o una foto.');
+      e.target.value = '';
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = function(ev) {
+      car.revCertData = ev.target.result;
+      car.revCertName = file.name || 'certificato-revisione.pdf';
+      persist();
+      render();
+      if (document.getElementById('modal-cert').classList.contains('open')) {
+        openCertModal();
+      }
+    };
+    reader.readAsDataURL(file);
+  } else if (file.type.startsWith('image/')) {
+    const reader = new FileReader();
+    reader.onload = function(ev) {
+      const img = new Image();
+      img.onload = function() {
+        const canvas = document.createElement('canvas');
+        const maxW = 1100;
+        const scale = Math.min(1, maxW / img.width);
+        canvas.width = img.width * scale;
+        canvas.height = img.height * scale;
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        car.revCertData = canvas.toDataURL('image/jpeg', 0.72);
+        car.revCertName = file.name || 'certificato-revisione.jpg';
+        persist();
+        render();
+        if (document.getElementById('modal-cert').classList.contains('open')) {
+          openCertModal();
+        }
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  } else {
+    alert('Formato non supportato. Carica un PDF o una foto.');
+  }
+  e.target.value = '';
+}
+
+function openCertModal() {
+  const car = state.cars.find(c => c.id === state.selectedCarId);
+  if (!car || !car.revCertData) return;
+  const body = document.getElementById('cert-viewer-body');
+  const isPdf = car.revCertData.startsWith('data:application/pdf');
+  if (isPdf) {
+    body.innerHTML = `
+      <iframe src="${car.revCertData}" style="width:100%; height:62vh; border:1px solid var(--border); border-radius:12px;"></iframe>
+      <div style="margin-top:8px;">
+        <a href="${car.revCertData}" download="${escapeHtml(car.revCertName || 'certificato-revisione.pdf')}" class="btn btn-primary btn-sm">📥 Scarica PDF</a>
+      </div>
+    `;
+  } else {
+    body.innerHTML = `
+      <img src="${car.revCertData}" style="width:100%; max-height:65vh; object-fit:contain; border-radius:12px; border:1px solid var(--border);" alt="Certificato Revisione">
+    `;
+  }
+  openModal('modal-cert');
+}
+
+function deleteRevCert() {
+  const car = state.cars.find(c => c.id === state.selectedCarId);
+  if (!car) return;
+  if (!confirm('Rimuovere il certificato di revisione allegato?')) return;
+  car.revCertData = null;
+  car.revCertName = null;
+  persist();
+  closeModal('modal-cert');
+  render();
 }
 
 
@@ -1410,43 +1525,46 @@ function renderRevisioneBlock(car) {
           <span class="badge badge-warn">Data (B) mancante</span>
         </div>
         <div style="font-size:12.5px; color:var(--muted); line-height:1.45;">
-          Inserisci la <b>Data di 1ª Immatricolazione (B)</b> (manualmente o scansionando il PDF del libretto in <i>Modifica</i>) per calcolare automaticamente <b>Prima Revisione</b> (4 anni) e <b>Revisione Successiva</b> (+2 anni).
+          Inserisci la <b>Data di 1ª Immatricolazione (B)</b> (manualmente o scansionando il PDF del libretto in <i>Modifica</i>) per calcolare automaticamente <b>Prima Revisione</b> (4 anni) e <b>Ultima Revisione / Successiva</b>.
         </div>
       </div>
     `;
   }
 
   const primaStatus = getDeadlineStatus({ date: rev.primaRevISO }, car.km);
-  const isPrimaExpired = rev.successivaRevISO !== null;
-  const primaBadgeHtml = isPrimaExpired
+  const isPrimaDoneOrExpired = rev.hasLastRev || rev.successivaRevISO !== null;
+  const primaBadgeHtml = isPrimaDoneOrExpired
     ? `<span class="badge" style="background:#f1f5f9; color:#64748b;">Effettuata / Scaduta</span>`
     : `<span class="badge badge-${primaStatus.level}">${primaStatus.text}</span>`;
 
-  let succHtml = '';
+  const activeStatus = getDeadlineStatus({ date: rev.activeTargetISO }, car.km);
+
+  let successivaLineHtml = '';
   if (rev.successivaRevISO) {
     const succStatus = getDeadlineStatus({ date: rev.successivaRevISO }, car.km);
-    succHtml = `
-      <div class="rev-subrow active-rev">
-        <div>
-          <div class="rev-subrow-label">Revisione Successiva (+2 anni)</div>
-          <div class="rev-subrow-sub">Entro il <b>${new Date(rev.successivaRevISO + 'T00:00:00').toLocaleDateString('it-IT')}</b></div>
-        </div>
-        <span class="badge badge-${succStatus.level}">${succStatus.text}</span>
+    const succDateFormatted = new Date(rev.successivaRevISO + 'T00:00:00').toLocaleDateString('it-IT');
+    const isBad = succStatus.level === 'bad';
+    const isWarn = succStatus.level === 'warn';
+    const pillBg = isBad ? 'var(--bad-bg)' : (isWarn ? 'var(--warn-bg)' : 'var(--ok-bg)');
+    const pillTxt = isBad ? 'var(--bad-txt)' : (isWarn ? 'var(--warn-txt)' : 'var(--ok-txt)');
+    successivaLineHtml = `
+      <div style="margin-top:8px; padding-top:8px; border-top:1px dashed var(--border); display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">
+        <span style="font-size:12.5px; font-weight:700; color:#374151;">Successiva <span style="font-weight:500; color:var(--muted);">(+2 anni, mese imm.)</span>:</span>
+        <span style="font-size:13.5px; font-weight:900; padding:3px 9px; border-radius:8px; background:${pillBg}; color:${pillTxt};">${succDateFormatted}</span>
       </div>
     `;
   } else {
-    succHtml = `
-      <div class="rev-subrow" style="opacity:0.65;">
-        <div>
-          <div class="rev-subrow-label">Revisione Successiva</div>
-          <div class="rev-subrow-sub">Verrà compilata (+2 anni) alla scadenza della prima</div>
-        </div>
-        <span style="font-size:12px; color:var(--muted); font-weight:600;">—</span>
+    successivaLineHtml = `
+      <div style="margin-top:8px; padding-top:8px; border-top:1px dashed var(--border); display:flex; align-items:center; justify-content:space-between; gap:8px;">
+        <span style="font-size:12.5px; font-weight:700; color:var(--muted);">Successiva:</span>
+        <span style="font-size:12px; color:var(--muted);">Inserisci data ultima revisione</span>
       </div>
     `;
   }
 
-  const activeStatus = getDeadlineStatus({ date: rev.activeTargetISO }, car.km);
+  const certBtnHtml = car.revCertData
+    ? `<button type="button" class="btn btn-primary btn-sm" style="width:100%;" onclick="openCertModal()">👁️ Visualizza certificato</button>`
+    : `<button type="button" class="btn btn-secondary btn-sm" style="width:100%;" onclick="document.getElementById('rev-cert-file').click()">📎 Carica certificato (PDF / Foto)</button>`;
 
   return `
     <div class="revisione-box">
@@ -1457,14 +1575,31 @@ function renderRevisioneBlock(car) {
       <div style="font-size:11.5px; color:var(--muted); margin-bottom:4px;">
         1ª Immatricolazione (B): <b>${new Date(rev.regDateISO + 'T00:00:00').toLocaleDateString('it-IT')}</b>
       </div>
-      <div class="rev-subrow ${!isPrimaExpired ? 'active-rev' : ''}">
+      <div class="rev-subrow ${!isPrimaDoneOrExpired ? 'active-rev' : ''}">
         <div>
           <div class="rev-subrow-label">Prima Revisione (4 anni)</div>
           <div class="rev-subrow-sub">Entro fine mese: <b>${new Date(rev.primaRevISO + 'T00:00:00').toLocaleDateString('it-IT')}</b></div>
         </div>
         ${primaBadgeHtml}
       </div>
-      ${succHtml}
+
+      <div class="rev-subrow ${isPrimaDoneOrExpired ? 'active-rev' : ''}" style="flex-direction:column; align-items:stretch;">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">
+          <div style="flex:1; min-width:120px;">
+            <div class="rev-subrow-label">Ultima Revisione</div>
+            <div class="rev-subrow-sub">Data effettuazione</div>
+          </div>
+          <div style="flex-shrink:0;">
+            <input type="date" value="${escapeHtml(car.lastRevisioneDate || '')}" onchange="updateLastRevisioneDate(this.value)"
+                   style="padding:7px 10px; font-size:13.5px; border-radius:10px; border:1.5px solid #cbd5e1; width:auto; max-width:165px;">
+          </div>
+        </div>
+        ${successivaLineHtml}
+        <div style="margin-top:9px;">
+          <input type="file" id="rev-cert-file" accept=".pdf,application/pdf,image/*" style="display:none" onchange="handleRevCertUpload(event)">
+          ${certBtnHtml}
+        </div>
+      </div>
     </div>
   `;
 }
